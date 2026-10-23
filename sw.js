@@ -15,7 +15,8 @@ const ASSETS = [
 const FONT_HOSTS = ['fonts.googleapis.com', 'fonts.gstatic.com'];
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(SHELL).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
+  // bypass the HTTP cache so a new release never precaches the previous files (GitHub Pages sends max-age=600)
+  e.waitUntil(caches.open(SHELL).then(c => c.addAll(ASSETS.map(u => new Request(u, { cache: 'reload' })))).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', e => {
@@ -36,7 +37,8 @@ function staleWhileRevalidate(e, cacheName, key) {
     return res;
   }).catch(() => null);
   e.waitUntil(net);
-  return caches.match(key || e.request).then(hit => hit || net).then(res => res || caches.match('./index.html'));
+  // only page navigations fall back to the app shell; a missing font must not be answered with HTML
+  return caches.match(key || e.request).then(hit => hit || net).then(res => res || (key ? caches.match('./index.html') : Response.error()));
 }
 
 self.addEventListener('fetch', e => {
