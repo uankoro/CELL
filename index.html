@@ -3687,5 +3687,9 @@ function boot(){
 try{boot();}catch(e){console.error(e);document.body.insertAdjacentHTML('beforeend',`<div style="position:fixed;left:16px;bottom:16px;z-index:99;padding:10px 14px;border-radius:10px;background:#300;color:#fff;font:13px sans-serif">起動に失敗しました：${esc(e.message)}</div>`);}
 })();
 </script>
+<script>
+/* offline support: register the service worker relative to this page so it works under the /CELL/ sub-path (skipped when opened as a local file) */
+if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol)){addEventListener('load',()=>{navigator.serviceWorker.register('./sw.js',{scope:'./'}).catch(()=>{});});}
+</script>
 </body>
 </html>
