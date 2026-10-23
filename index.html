@@ -633,6 +633,23 @@ input,textarea,[contenteditable="true"]{-webkit-user-select:text;user-select:tex
   .win-h{cursor:default}
   #viz{display:none}
 }
+/* ===== portrait guard: landscape-only app. The overlay only covers the app (nothing is torn down), so turning back resumes exactly where you were */
+#rotate{display:none;position:fixed;inset:0;z-index:2147483000;place-items:center;text-align:center;touch-action:none;
+  padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px);
+  background:radial-gradient(ellipse at 50% 38%,rgba(94,242,255,.10),transparent 60%),radial-gradient(ellipse at 50% 40%,rgba(14,20,40,.97),rgba(2,3,6,.99));color:var(--ink);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px)}
+@media (orientation:portrait) and (pointer:coarse){#rotate{display:grid;animation:fin var(--dur-3) var(--ease-out)}}
+.rot-in{display:flex;flex-direction:column;align-items:center;gap:var(--sp-4);padding:var(--sp-6)}
+.rot-ic{width:132px;height:132px;color:var(--accent)}
+.rot-ic svg{width:100%;height:100%;overflow:visible}
+.rot-ic .phone{transform-origin:60px 60px;animation:rot-turn 3.2s var(--ease-out) infinite;filter:drop-shadow(0 0 10px color-mix(in srgb,var(--accent) 55%,transparent))}
+.rot-ic .arc{opacity:.75;animation:rot-arc 3.2s var(--ease-out) infinite}
+@keyframes rot-turn{0%,22%{transform:rotate(0)}48%,82%{transform:rotate(90deg)}100%{transform:rotate(0)}}
+@keyframes rot-arc{0%,18%{opacity:0}28%,46%{opacity:.8}60%,100%{opacity:0}}
+.rot-in .logo{gap:4px}
+.rot-t{margin:0;font-size:18px;font-weight:600;letter-spacing:.14em}
+.rot-d{margin:0;font-size:var(--fs-sm);line-height:1.8;color:var(--ink2);letter-spacing:.06em}
+@media (prefers-reduced-motion:reduce){.rot-ic .phone{transform:rotate(90deg)}.rot-ic .arc{opacity:.8}}
+
 /* ===== phone landscape (short & wide): one slim top bar, one bottom bar; transport at the left thumb, tools at the right thumb */
 @media (max-height:500px) and (orientation:landscape){
   #ui{padding:calc(var(--sp-2) + env(safe-area-inset-top,0px)) calc(var(--sp-3) + env(safe-area-inset-right,0px)) calc(var(--sp-2) + env(safe-area-inset-bottom,0px)) calc(var(--sp-3) + env(safe-area-inset-left,0px))}
@@ -773,6 +790,17 @@ input,textarea,[contenteditable="true"]{-webkit-user-select:text;user-select:tex
   </div>
 </div>
 
+<div id="rotate" role="alertdialog" aria-modal="true" aria-labelledby="rotT" aria-describedby="rotD">
+  <div class="rot-in">
+    <div class="rot-ic" aria-hidden="true"><svg viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+      <path class="arc" d="M96 34a46 46 0 0 1 6 40M100 66l2 9 8-5"/>
+      <g class="phone"><rect x="40" y="16" width="40" height="88" rx="9"/><path d="M54 24h12"/><circle cx="60" cy="95" r="2.2" fill="currentColor" stroke="none"/></g>
+    </svg></div>
+    <div class="logo" aria-label="CELL"><i>C</i><i>E</i><i>L</i><i>L</i></div>
+    <p class="rot-t" id="rotT">横向きにしてください</p>
+    <p class="rot-d" id="rotD">CELL は横長の窓から眺める部屋です。<br>端末を横にすると、そのまま続きから戻れます。</p>
+  </div>
+</div>
 <iframe id="casual" title="SUIKYO CLOCK（カジュアル）" allow="fullscreen; autoplay" allowfullscreen hidden></iframe>
 <div id="boot">
   <div class="b-in">
@@ -3093,6 +3121,8 @@ const ic=n=>`<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${ICON[n]||''
 
 /* ================= helpers ================= */
 const compact=()=>innerHeight<=500&&innerWidth>innerHeight;
+const PORTRAIT=matchMedia('(orientation: portrait) and (pointer: coarse)');
+PORTRAIT.addEventListener&&PORTRAIT.addEventListener('change',e=>{if(e.matches&&document.activeElement&&document.activeElement.blur)document.activeElement.blur();});
 /* safe-area insets in px (notch, Dynamic Island, home bar), refreshed on resize */
 const SA={t:0,r:0,b:0,l:0,read(){const st=getComputedStyle($('#safeProbe'));this.t=parseFloat(st.paddingTop)||0;this.r=parseFloat(st.paddingRight)||0;this.b=parseFloat(st.paddingBottom)||0;this.l=parseFloat(st.paddingLeft)||0;return this;}};
 /* keep a box of size w×h fully inside the safe area (with a small margin) */
@@ -3672,12 +3702,12 @@ function wake(){document.body.classList.remove('idle');clearTimeout(idleT);idleT
 
 /* resize */
 let rsT=null;
-addEventListener('resize',()=>{clearTimeout(rsT);rsT=setTimeout(()=>{SA.read();Type.insets();UI.vizOff=getComputedStyle($('#viz')).display==='none';if(innerWidth===Stage.W&&innerHeight===Stage.H)return;Stage.resize();Stage.build();Focus.layout();Stk.render();Pins.render();for(const id in WM.els)if(WM.isOpen(id))WM.place(WM.els[id],id);},160);});
+addEventListener('resize',()=>{clearTimeout(rsT);rsT=setTimeout(()=>{if(PORTRAIT.matches)return;SA.read();Type.insets();UI.vizOff=getComputedStyle($('#viz')).display==='none';if(innerWidth===Stage.W&&innerHeight===Stage.H)return;Stage.resize();Stage.build();Focus.layout();Stk.render();Pins.render();for(const id in WM.els)if(WM.isOpen(id))WM.place(WM.els[id],id);},160);});
 
 /* loop */
 let lastT=performance.now(),errShown=false;
 function frame(now){
-  requestAnimationFrame(frame);const dt=Math.min(.05,Math.max(0,(now-lastT)/1000));lastT=now;if(document.hidden||Type.cur==='casual')return;
+  requestAnimationFrame(frame);const dt=Math.min(.05,Math.max(0,(now-lastT)/1000));lastT=now;if(document.hidden||Type.cur==='casual'||PORTRAIT.matches)return;
   const c=Stage.ctx;c.setTransform(Stage.dpr,0,0,Stage.dpr,0,0);c.globalAlpha=1;c.globalCompositeOperation='source-over';
   try{Stage.scene.draw(c,now/1000,dt);}catch(err){if(!errShown){errShown=true;console.error(err);}}
   CLK.tick();UI.viz();SW.paint();
