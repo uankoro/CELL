@@ -1,0 +1,22 @@
+{
+  "id": "./",
+  "name": "CELL — 集中と休息のための、八つの部屋",
+  "short_name": "CELL",
+  "description": "夜ドライブ・焚火・喫茶など八つの場面で、音楽と環境音に包まれながら集中と休息をとるためのチルソフト。",
+  "lang": "ja",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone"],
+  "orientation": "landscape",
+  "theme_color": "#05060c",
+  "background_color": "#04050a",
+  "categories": ["productivity", "lifestyle", "music"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/apple-touch-icon.png", "sizes": "180x180", "type": "image/png", "purpose": "any" }
+  ]
+}
