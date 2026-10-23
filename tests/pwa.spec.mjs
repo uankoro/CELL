@@ -54,6 +54,7 @@ test.describe('service worker', () => {
     expect(before.some(k => k.startsWith('cell-shell-'))).toBe(true);
     await context.addCookies([{ name: 'swv', value: 'v999-test', url: 'http://localhost:4173/' }]);
     await page.evaluate(async () => { const r = await navigator.serviceWorker.getRegistration(); await r.update(); });
-    await expect.poll(() => page.evaluate(() => caches.keys()), { timeout: 15000 }).toEqual(['cell-shell-v999-test']);
+    // only caches of the new version remain (shell, plus the runtime cache if the new worker already cached something)
+    await expect.poll(async () => { const ks = await page.evaluate(() => caches.keys()); return ks.includes('cell-shell-v999-test') && ks.every(k => k.endsWith('-v999-test')); }, { timeout: 15000 }).toBe(true);
   });
 });

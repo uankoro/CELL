@@ -5,6 +5,7 @@ import http from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { gzipSync } from 'node:zlib';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const PORT = +(process.env.PORT || 4173);
@@ -24,7 +25,10 @@ http.createServer(async (req, res) => {
     let body = await readFile(file);
     const swVersion = /(?:^|;\s*)swv=([\w.-]+)/.exec(req.headers.cookie || '')?.[1];
     if (rel === 'sw.js' && swVersion) body = Buffer.from(body.toString().replace(/const VERSION = '[^']*'/, `const VERSION = '${swVersion}'`));
-    res.writeHead(200, { 'Content-Type': TYPES[extname(file)] || 'application/octet-stream', 'Cache-Control': 'no-cache' });
+    const type = TYPES[extname(file)] || 'application/octet-stream', headers = { 'Content-Type': type, 'Cache-Control': 'no-cache' };
+    // compress text like GitHub Pages does
+    if (/text|json|javascript|svg/.test(type) && /\bgzip\b/.test(req.headers['accept-encoding'] || '')) { body = gzipSync(body); headers['Content-Encoding'] = 'gzip'; headers['Vary'] = 'Accept-Encoding'; }
+    res.writeHead(200, headers);
     res.end(body);
   } catch { res.writeHead(404); res.end('not found'); }
 }).listen(PORT, () => console.log(`CELL: http://localhost:${PORT}${BASE}`));

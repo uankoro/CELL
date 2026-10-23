@@ -1,6 +1,6 @@
 /* CELL service worker — works offline and starts instantly.
    Bump VERSION on every release: the new worker precaches the new files and deletes the old caches on activate. */
-const VERSION = 'v1.0.0';
+const VERSION = 'v2.0.0';
 const SHELL = `cell-shell-${VERSION}`;
 const RUNTIME = `cell-runtime-${VERSION}`;
 const ASSETS = [
