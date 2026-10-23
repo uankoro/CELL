@@ -31,7 +31,10 @@ body[data-scene="onsen"]{--accent:#ffcf8a;--accent2:#8fc6e0}
 body[data-scene="sea"]{--accent:#8ec5ff;--accent2:#ffe08a}
 body[data-scene="orbit"]{--accent:#b9a6ff;--accent2:#6ff0ff}
 *,*::before,*::after{box-sizing:border-box}
-html,body{height:100%;margin:0;background:#04050a;overflow:hidden}
+html,body{height:100%;margin:0;background:#04050a;overflow:hidden;overscroll-behavior:none}
+/* the page itself never scrolls or rubber-bands; only inner panels scroll (with momentum) */
+body{position:fixed;inset:0}
+.win-b,#scenes,.laps,.pw-list,.pop,#dock{overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
 body{color:var(--ink);font-family:var(--ui);font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
 button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer;background:none;border:0;padding:0}
@@ -711,7 +714,8 @@ input,textarea,[contenteditable="true"]{-webkit-user-select:text;user-select:tex
 }
 @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){ --bg:#16181B; --ink:#F1F2F3; --dim:#9097A0; --surface:#1D2024; --line:#30343A; --accent:#F1F2F3; --on-accent:#16181B; --field:#25292E; } }
 :root[data-theme="dark"]{ --bg:#16181B; --ink:#F1F2F3; --dim:#9097A0; --surface:#1D2024; --line:#30343A; --accent:#F1F2F3; --on-accent:#16181B; --field:#25292E; }
-html{scroll-padding-top:env(safe-area-inset-top,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px);overscroll-behavior:none}
+.tlist,.modes{overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
 *,*::before,*::after{box-sizing:border-box}
 body{margin:0;min-height:100vh;background:var(--bg);color:var(--ink);font-family:var(--ui,"Zen Kaku Gothic New"),"Hiragino Sans","Yu Gothic",system-ui,sans-serif;font-size:14.5px;line-height:1.6;transition:background-color .4s,color .4s;overflow-x:hidden}
 button,input,select{font:inherit;color:inherit}
@@ -1746,6 +1750,16 @@ const Press={sel:'button,.sc,label.chk,[data-press]',el:null,
 };
 Press.init(document);
 addEventListener('gesturestart',e=>e.preventDefault());
+/* rubber-band guard for iOS < 16 (no overscroll-behavior): a drag that does not start inside a scroll area, slider or text field never moves the page */
+(()=>{let allow=true;
+  const movable=el=>{for(;el&&el.nodeType===1&&el!==document.body;el=el.parentElement){
+    if(el.matches('input,textarea,select,.win-h,.stk-h,.pw-h'))return true;
+    const st=getComputedStyle(el);
+    if(/(auto|scroll)/.test(st.overflowY)&&el.scrollHeight>el.clientHeight+1)return true;
+    if(/(auto|scroll)/.test(st.overflowX)&&el.scrollWidth>el.clientWidth+1)return true;}return false;};
+  document.addEventListener('touchstart',e=>{allow=e.touches.length===1&&movable(e.target);},{passive:true});
+  document.addEventListener('touchmove',e=>{if(!allow&&e.cancelable)e.preventDefault();},{passive:false});
+})();
 /* show/hide with an exit animation instead of an abrupt cut */
 function showEl(el){if(!el)return;clearTimeout(el._ht);el.classList.remove('leaving');el.hidden=false;}
 function hideEl(el,ms=240){if(!el||el.hidden)return;if(REDUCED){el.hidden=true;return;}el.classList.add('leaving');clearTimeout(el._ht);el._ht=setTimeout(()=>{el.hidden=true;el.classList.remove('leaving');},ms);}
