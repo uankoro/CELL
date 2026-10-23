@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#05060c">
+<!-- the chill side is a night world by design: dark in both system appearances -->
+<meta name="color-scheme" content="dark">
 <title>CELL</title>
 <style>
 :root{
@@ -612,6 +614,8 @@ input,textarea,[contenteditable="true"]{-webkit-user-select:text;user-select:tex
 }
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+  /* the VFD marquee would end off-screen; show the track name still instead */
+  .vfd-mq span{padding-left:0;animation:none!important;max-width:100%;overflow:hidden;text-overflow:ellipsis;vertical-align:top}
 }
 </style>
 </head>
@@ -706,6 +710,7 @@ input,textarea,[contenteditable="true"]{-webkit-user-select:text;user-select:tex
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
 <title>SUIKYO CLOCK</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1743,16 +1748,17 @@ const JPFONT='"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Meiryo","
 const MINCHO='"Hiragino Mincho ProN","Yu Mincho","YuMincho","Noto Serif JP",serif';
 const MONO='ui-monospace,"SF Mono",Menlo,Consolas,monospace';
 const REDUCED=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const RM=matchMedia('(prefers-reduced-motion: reduce)'),calm=()=>RM.matches;
 /* press feedback: shrink on touch-down, spring back on release (Web Animations, so it never fights CSS transitions) */
 const Press={sel:'button,.sc,label.chk,[data-press]',el:null,
   init(doc){doc.addEventListener('pointerdown',e=>{if(e.button>0)return;const el=e.target.closest&&e.target.closest(this.sel);if(!el||el.disabled)return;this.down(el);},{passive:true});
     for(const t of ['pointerup','pointercancel'])doc.addEventListener(t,()=>this.up(),{passive:true});
     doc.addEventListener('touchstart',()=>{},{passive:true});},
   down(el){this.up();this.el=el;const r=el.getBoundingClientRect(),k=Math.max(.94,1-4/Math.max(r.width,r.height,1));
-    if(el._pa)el._pa.cancel();el._pa=el.animate(REDUCED?{opacity:[1,.6]}:{scale:[1,k]},{duration:90,easing:'ease-out',fill:'forwards'});},
+    if(el._pa)el._pa.cancel();const rm=calm();el._pa=el.animate(rm?{opacity:[1,.6]}:{scale:[1,k]},{duration:90,easing:'ease-out',fill:'forwards'});},
   up(){const el=this.el;if(!el)return;this.el=null;const a=el._pa;if(!a)return;
-    const cs=getComputedStyle(el),from=REDUCED?{opacity:[cs.opacity,1]}:{scale:[cs.scale==='none'?'1':cs.scale,'1']};
-    a.cancel();el._pa=el.animate(from,{duration:REDUCED?120:340,easing:REDUCED?'ease-out':'cubic-bezier(.34,1.56,.64,1)'});}
+    const rm=calm(),cs=getComputedStyle(el),from=rm?{opacity:[cs.opacity,1]}:{scale:[cs.scale==='none'?'1':cs.scale,'1']};
+    a.cancel();el._pa=el.animate(from,{duration:rm?120:340,easing:rm?'ease-out':'cubic-bezier(.34,1.56,.64,1)'});}
 };
 Press.init(document);
 addEventListener('gesturestart',e=>e.preventDefault());
@@ -1768,7 +1774,7 @@ addEventListener('gesturestart',e=>e.preventDefault());
 })();
 /* show/hide with an exit animation instead of an abrupt cut */
 function showEl(el){if(!el)return;clearTimeout(el._ht);el.classList.remove('leaving');el.hidden=false;}
-function hideEl(el,ms=240){if(!el||el.hidden)return;if(REDUCED){el.hidden=true;return;}el.classList.add('leaving');clearTimeout(el._ht);el._ht=setTimeout(()=>{el.hidden=true;el.classList.remove('leaving');},ms);}
+function hideEl(el,ms=240){if(!el||el.hidden)return;if(calm()){el.hidden=true;return;}el.classList.add('leaving');clearTimeout(el._ht);el._ht=setTimeout(()=>{el.hidden=true;el.classList.remove('leaving');},ms);}
 const shown=el=>!!el&&!el.hidden&&!el.classList.contains('leaving');
 const store={
   get(k,d){try{const v=localStorage.getItem('cell:'+k);return v==null?d:JSON.parse(v);}catch(e){return d;}},
@@ -3446,8 +3452,8 @@ const Type={cur:store.get('type','chill')==='casual'?'casual':'chill',frame:null
   init(){this.frame=$('#casual');const src=$('#casualSrc').textContent.replace(/<\\\/script/g,'</script').replace(/<\\!--/g,'<!--');this.frame.srcdoc=src;},
   win(){try{return this.frame&&this.frame.contentWindow&&this.frame.contentWindow.CASUAL||null;}catch(e){return null;}},
   apply(){const c=this.cur==='casual',f=this.frame;clearTimeout(this.ft);
-    if(c){f.classList.add('fading');f.hidden=false;void f.offsetWidth;f.classList.remove('fading');this.ft=setTimeout(()=>document.body.classList.add('casual'),REDUCED?0:360);}
-    else{document.body.classList.remove('casual');f.classList.add('fading');this.ft=setTimeout(()=>{f.hidden=true;f.classList.remove('fading');},REDUCED?0:360);}},
+    if(c){f.classList.add('fading');f.hidden=false;void f.offsetWidth;f.classList.remove('fading');this.ft=setTimeout(()=>document.body.classList.add('casual'),calm()?0:360);}
+    else{document.body.classList.remove('casual');f.classList.add('fading');this.ft=setTimeout(()=>{f.hidden=true;f.classList.remove('fading');},calm()?0:360);}},
   set(t){t=t==='casual'?'casual':'chill';if(t===this.cur)return;this.cur=t;store.set('type',t);
     if(t==='casual'){if(Focus.on)Focus.toggle(false);if(document.body.classList.contains('zen'))zen(false);Object.keys(WM.els).forEach(k=>WM.close(k));hideEl($('#tracklist'));}
     this.apply();
