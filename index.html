@@ -3380,7 +3380,7 @@ function toast(title,body,actions,ms){
   /* swipe the banner up to dismiss it */
   el.addEventListener('pointerdown',e=>{if(e.target.closest('button'))return;const y0=e.clientY,id=e.pointerId,tr=tracker();let dy=0;
     const mv=m=>{if(m.pointerId!==id)return;dy=m.clientY-y0;tr.add(0,m.clientY);el.style.transform=`translateY(${dy<0?dy:rubber(dy,14)}px)`;};
-    const up=u=>{if(u.pointerId!==id)return;removeEventListener('pointermove',mv);removeEventListener('pointerup',up);removeEventListener('pointercancel',up);
+    const up=u=>{if(u.pointerId!==id)return;if(u.type==='pointerup')mv(u);removeEventListener('pointermove',mv);removeEventListener('pointerup',up);removeEventListener('pointercancel',up);
       const v=tr.v().y,set=y=>{el.style.transform=`translateY(${y}px)`;};
       if(dy<-28||v<-500)spring({from:dy,to:-el.offsetHeight-40,v:Math.min(v,-400),onUpdate:set,onDone:()=>el.remove()});
       else spring({from:dy<0?dy:rubber(dy,14),to:0,v,onUpdate:set,onDone:()=>{el.style.transform='';}});};
@@ -3709,7 +3709,10 @@ function hdrag(el,{ok,start,move,end}){
     const mv=m=>{if(m.pointerId!==id||dead)return;const dx=m.clientX-x0,dy=m.clientY-y0;tr.add(m.clientX,m.clientY);
       if(!on){if(Math.abs(dy)>10&&Math.abs(dy)>Math.abs(dx)){dead=true;return;}if(Math.abs(dx)<10)return;on=true;try{el.setPointerCapture(id);}catch(err){}start&&start(e);}
       move(dx,dy,m);};
-    const up=u=>{if(u.pointerId!==id)return;removeEventListener('pointermove',mv);removeEventListener('pointerup',up);removeEventListener('pointercancel',up);
+    const up=u=>{if(u.pointerId!==id)return;
+      /* a very fast flick can arrive as down → up with its moves coalesced away: treat the release point as the last move */
+      if(u.type==='pointerup'&&!dead&&(u.clientX!==x0||u.clientY!==y0))mv(u);
+      removeEventListener('pointermove',mv);removeEventListener('pointerup',up);removeEventListener('pointercancel',up);
       if(on){el._dragged=performance.now();end(u.clientX-x0,tr.v().x,u.type==='pointercancel');}};
     addEventListener('pointermove',mv,{passive:true});addEventListener('pointerup',up);addEventListener('pointercancel',up);});
   /* a drag must never also count as a tap */
