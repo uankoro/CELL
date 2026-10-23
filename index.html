@@ -801,7 +801,7 @@ input,textarea,[contenteditable="true"]{-webkit-user-select:text;user-select:tex
     <p class="rot-d" id="rotD">CELL は横長の窓から眺める部屋です。<br>端末を横にすると、そのまま続きから戻れます。</p>
   </div>
 </div>
-<iframe id="casual" title="SUIKYO CLOCK（カジュアル）" allow="fullscreen; autoplay" allowfullscreen hidden></iframe>
+<iframe id="casual" title="SUIKYO CLOCK（カジュアル）" allow="fullscreen; autoplay" hidden></iframe>
 <div id="boot">
   <div class="b-in">
     <div class="b-logo" aria-label="CELL"><i>C</i><i>E</i><i>L</i><i>L</i></div>
@@ -3381,7 +3381,7 @@ const WM={z:10,els:{},
   closeTop(){let top=null,z=-1;for(const id in this.els)if(this.isOpen(id)){const zz=+this.els[id].style.zIndex||0;if(zz>z){z=zz;top=id;}}if(top){this.close(top);return true;}return false;},
   front(e){e.style.zIndex=++this.z;},
   create(id){
-    const d=WINS[id],e=document.createElement('section');e.className='win';e.hidden=true;e.style.width=d.w+'px';e.setAttribute('role','dialog');e.setAttribute('aria-label',d.title);
+    const d=WINS[id],e=document.createElement('section');e.className='win';e.dataset.win=id;e.hidden=true;e.style.width=d.w+'px';e.setAttribute('role','dialog');e.setAttribute('aria-label',d.title);
     const pinId=id==='calendar'?'cal':id==='tasks'?'tasks':null;
     e.innerHTML=`<div class="win-h">${ic(d.icon)}<b>${d.title}</b>${pinId?`<button class="x pinb" data-pin="${pinId}" aria-label="画面に貼る" title="画面に貼る">${ic('tack')}</button>`:''}<button class="x" aria-label="${d.title}を閉じる">${ic('x')}</button></div><div class="win-b"></div>`;
     if(pinId)e.querySelector('.pinb').onclick=()=>{const on=!Pins.isOn(pinId);Pins.toggle(pinId,on);if(on)this.close(id);};
