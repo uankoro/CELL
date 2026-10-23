@@ -653,6 +653,7 @@ input[type=range]::-moz-range-thumb{width:28px;height:28px;box-shadow:0 .5px 4px
 .hint{font-size:var(--fs-xs);color:var(--ink3);margin:10px 0 0;line-height:1.6}
 /* context menu */
 .menu-bd{position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.18)}
+.menu-bd.gone{background:transparent}
 .menu{position:fixed;z-index:71;min-width:230px;max-width:min(300px,80vw);padding:6px;border-radius:14px;box-shadow:0 20px 50px -10px rgba(0,0,0,.6);animation:menuin var(--dur-3) var(--ease-spring)}
 .menu.leaving{animation:menuout .18s var(--ease-in) forwards}
 @keyframes menuin{from{opacity:0;transform:scale(.86)}}
@@ -3730,12 +3731,15 @@ const I18N={lang:'ja',orig:new WeakMap(),obs:new Map(),pats:null,frags:null,
    velocity, so a flick carries straight into the animation instead of restarting it. Units: px and px/s. */
 function spring({from,to,v=0,mass=1,stiffness=420,damping=38,onUpdate,onDone}){
   if(calm()){onUpdate(to);onDone&&onDone();return{stop(){}};}
-  let x=from,vel=v,last=performance.now(),raf=0,dead=false;
-  const step=now=>{if(dead)return;const dt=Math.min(.034,Math.max(0,(now-last)/1000));last=now;
-    for(let i=0;i<4;i++){const h=dt/4,f=-stiffness*(x-to)-damping*vel;vel+=f/mass*h;x+=vel*h;}
-    if(Math.abs(vel)<8&&Math.abs(x-to)<.4){onUpdate(to);onDone&&onDone();return;}
+  let x=from,vel=v,last=performance.now(),raf=0,dead=false,safety=0;
+  /* finish exactly once, even when frames are dropped or rAF stalls (the action at the end must never be lost) */
+  const fin=()=>{if(dead)return;dead=true;cancelAnimationFrame(raf);clearTimeout(safety);onUpdate(to);onDone&&onDone();};
+  const step=now=>{if(dead)return;const dt=Math.min(.1,Math.max(0,(now-last)/1000)),n=Math.max(1,Math.ceil(dt/.006)),h=dt/n;last=now;
+    for(let i=0;i<n;i++){const f=-stiffness*(x-to)-damping*vel;vel+=f/mass*h;x+=vel*h;}
+    if(Math.abs(vel)<8&&Math.abs(x-to)<.4)return fin();
     onUpdate(x);raf=requestAnimationFrame(step);};
-  raf=requestAnimationFrame(step);return{stop(){dead=true;cancelAnimationFrame(raf);}};
+  raf=requestAnimationFrame(step);safety=setTimeout(fin,1500);
+  return{stop(){dead=true;cancelAnimationFrame(raf);clearTimeout(safety);}};
 }
 /* iOS-style rubber band: the further you pull past the edge, the less it follows */
 const rubber=(x,d=60)=>x<=0?0:(1-1/(x*.55/d+1))*d;
@@ -3781,14 +3785,16 @@ function longPress(el,sel,fn){let t=0,x=0,y=0,tgt=null;
 const Menu={el:null,
   open(x,y,items,title){this.close(true);const m=document.createElement('div');m.className='menu';m.setAttribute('role','menu');m.setAttribute('aria-label','操作');
     m.innerHTML=(title?`<div class="menu-t" data-u>${esc(title)}</div>`:'')+items.map((it,i)=>`<button role="menuitem" data-i="${i}" class="${it.danger?'danger':''}">${ic(it.icon||'check')}<span>${esc(it.label)}</span></button>`).join('');
-    const bd=document.createElement('div');bd.className='menu-bd';bd.addEventListener('pointerdown',e=>e.preventDefault());bd.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();this.close();});
+    const bd=document.createElement('div');bd.className='menu-bd';bd.addEventListener('pointerdown',e=>{e.preventDefault();bd._down=e.pointerId;});
+    /* close on release: WebKit drops the click of a touch whose pointerdown was prevented; the backdrop stays a moment longer to absorb that click so it never reaches what is underneath */
+    bd.addEventListener('pointerup',e=>{if(bd._down===e.pointerId&&this.bd===bd)this.close(false,true);});bd.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();this.close();});
     document.body.append(bd,m);this.el=m;this.bd=bd;
     const r=m.getBoundingClientRect(),W=innerWidth,H=innerHeight;
     m.style.left=clamp(x-r.width/2,SA.l+8,W-SA.r-r.width-8)+'px';m.style.top=clamp(y+12+r.height>H-SA.b-8?y-r.height-12:y+12,SA.t+8,H-SA.b-r.height-8)+'px';
     m.style.transformOrigin=`${x-parseFloat(m.style.left)}px ${y<parseFloat(m.style.top)?0:r.height}px`;
     m.addEventListener('click',e=>{const b=e.target.closest('[data-i]');if(!b)return;const it=items[+b.dataset.i];this.close();UIS.play(it.danger?'delete':'tap');it.fn();});
     m.querySelector('button').focus({preventScroll:true});},
-  close(now){const m=this.el,bd=this.bd;if(!m)return;this.el=this.bd=null;bd.remove();if(now||calm()){m.remove();return;}m.classList.add('leaving');setTimeout(()=>m.remove(),200);},
+  close(now,linger){const m=this.el,bd=this.bd;if(!m)return;this.el=this.bd=null;if(linger){bd.classList.add('gone');setTimeout(()=>bd.remove(),400);}else bd.remove();if(now||calm()){m.remove();return;}m.classList.add('leaving');setTimeout(()=>m.remove(),200);},
   get on(){return!!this.el;}
 };
 /* HUD: a brief centred confirmation (mode changed, sleep timer set …) */

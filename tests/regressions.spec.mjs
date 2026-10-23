@@ -79,3 +79,28 @@ test('closing the night screen with Esc leaves the sleep mood (no stale highligh
   await expect(page.locator('#night')).toBeHidden();
   expect(await page.evaluate(() => localStorage.getItem('cell:mode'))).toBe('""');
 });
+
+test('a swipe still completes its action when animation frames stall (slow device, dropped frames)', async ({ page }) => {
+  const win = await openWin(page, 'tasks');
+  await win.locator('[data-in]').fill('止まった描画');
+  await win.locator('[data-a="add"]').tap();
+  await page.evaluate(() => { window.requestAnimationFrame = () => 0; });
+  const b = await win.locator('.task', { hasText: '止まった描画' }).locator('.tx').boundingBox();
+  const x = b.x + b.width / 2, y = b.y + b.height / 2;
+  await page.mouse.move(x, y); await page.mouse.down();
+  for (let i = 1; i <= 8; i++) await page.mouse.move(x + 20 * i, y);
+  await page.mouse.up();
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('cell:tasks'))[0].done), { timeout: 3000 }).toBe(true);
+});
+
+test('a menu opened by a long press stays open when that finger lifts', async ({ page }) => {
+  const win = await openWin(page, 'tasks');
+  await win.locator('[data-in]').fill('長押しして離す');
+  await win.locator('[data-a="add"]').tap();
+  const b = await win.locator('.task', { hasText: '長押しして離す' }).locator('.tx').boundingBox();
+  await page.mouse.move(b.x + 10, b.y + b.height / 2); await page.mouse.down();
+  await expect(page.locator('.menu')).toBeVisible();
+  await page.mouse.up();
+  await page.waitForTimeout(300);
+  await expect(page.locator('.menu')).toBeVisible();
+});
