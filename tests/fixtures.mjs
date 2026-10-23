@@ -7,6 +7,8 @@ const IGNORE = [/fonts\.(googleapis|gstatic)\.com/, /Failed to load resource.*fo
 export const test = base.extend({
   issues: async ({}, use) => { await use([]); },
   page: async ({ page, issues }, use) => {
+    // the casual clock's web fonts come from Google Fonts; stub them so tests never depend on the network
+    await page.route(/fonts\.(googleapis|gstatic)\.com/, r => r.fulfill({ status: 200, contentType: 'text/css', body: '' }));
     page.on('pageerror', e => issues.push(`pageerror: ${e.message}`));
     page.on('console', m => {
       if (m.type() !== 'error' && m.type() !== 'warning') return;

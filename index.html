@@ -1905,10 +1905,21 @@ function hideEl(el,ms=240){if(!el||el.hidden)return;if(calm()){el.hidden=true;re
 const shown=el=>!!el&&!el.hidden&&!el.classList.contains('leaving');
 /* write to the DOM only when the value really changed (the 4Hz timer loop would otherwise relayout every tick) */
 const setH=(el,h)=>{if(el&&el._h!==h){el._h=h;el.innerHTML=h;}},setT=(el,t)=>{if(el&&el.textContent!==t)el.textContent=t;};
+/* storage: a value of the wrong shape (hand-edited, truncated, from a future build) falls back to the default instead of breaking start-up */
+const kind=v=>Array.isArray(v)?'array':v===null?'null':typeof v;
 const store={
-  get(k,d){try{const v=localStorage.getItem('cell:'+k);return v==null?d:JSON.parse(v);}catch(e){return d;}},
-  set(k,v){try{localStorage.setItem('cell:'+k,JSON.stringify(v));}catch(e){}}
+  get(k,d){try{const raw=localStorage.getItem('cell:'+k);if(raw==null)return d;const v=JSON.parse(raw);
+    if(d!==undefined&&d!==null&&kind(v)!==kind(d))return d;return v;}catch(e){return d;}},
+  set(k,v){try{localStorage.setItem('cell:'+k,JSON.stringify(v));}catch(e){}},
+  list(k){return this.get(k,[]).filter(x=>x&&typeof x==='object');}
 };
+/* schema: v1 = everything up to the first PWA release. v2 adds only new keys (prefs, onboarding), so v1 data is read as-is.
+   Future format changes go here as step-by-step upgrades; existing keys are never rewritten without a migration. */
+const SCHEMA=2;
+(function migrate(){const from=store.get('schema',1)|0;if(from>=SCHEMA)return;
+  /* v1 → v2: a returning user has data already, so the first-run tour is skipped for them */
+  if(from<2&&['tasks','scene','stats','memo','stickies','reminders'].some(k=>localStorage.getItem('cell:'+k)!=null)&&localStorage.getItem('cell:onboarded')==null)store.set('onboarded',true);
+  store.set('schema',SCHEMA);})();
 
 /* ================= state (declared up-front) ================= */
 const SCENE_ORDER=['drive','camp','cafe','engawa','base','onsen','sea','orbit'];
@@ -1930,8 +1941,8 @@ const S={
   lofi:store.get('lofi',.42),
   vinyl:store.get('vinyl',.5),
   mix:store.get('mix',{}),
-  tasks:store.get('tasks',[]),
-  reminders:store.get('reminders',[]),
+  tasks:store.list('tasks'),
+  reminders:store.list('reminders'),
   memo:store.get('memo',''),
   tcfg:Object.assign({focus:25,short:5,long:15,auto:false,custom:10},store.get('tcfg',{})),
   stats:store.get('stats',{}),
@@ -3463,7 +3474,7 @@ const Focus={on:false,dim:clamp(store.get('focusDim',1)|0,0,2),
 };
 
 /* ================= sticky notes ================= */
-const Stk={z:10,list:store.get('stickies',[]),COLORS:['#ffe98a','#ffc6d3','#c4ecce','#c3defe','#e6d4ff'],t:null,
+const Stk={z:10,list:store.list('stickies'),COLORS:['#ffe98a','#ffc6d3','#c4ecce','#c3defe','#e6d4ff'],t:null,
   save(){store.set('stickies',this.list);},
   add(text){if(this.list.length>=16){toast('付箋は16枚までです','使い終わった付箋をはがしてから貼ってください。');return false;}
     const n=this.list.length,w=230,h=190,x=inX(Math.round(innerWidth*.5-w/2-120+(n%6)*34),w),y=inY(Math.round(innerHeight*.24+(n%6)*28),h);
@@ -3537,7 +3548,7 @@ function nextAlarm(now){now=now||new Date();let best=null;
 
 /* ================= pinned widgets (calendar / tasks) ================= */
 const Pins={
-  st:Object.assign({cal:{on:false,x:null,y:null},tasks:{on:false,x:null,y:null}},store.get('pins',{})),z:20,cy:null,cm:null,
+  st:(()=>{const d={cal:{on:false,x:null,y:null},tasks:{on:false,x:null,y:null}},v=store.get('pins',{});for(const k in d)if(v[k]&&typeof v[k]==='object')d[k]=Object.assign(d[k],v[k]);return d;})(),z:20,cy:null,cm:null,
   save(){store.set('pins',this.st);},
   isOn(id){return!!this.st[id].on;},
   toggle(id,on){const p=this.st[id];p.on=on==null?!p.on:!!on;
