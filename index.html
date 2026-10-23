@@ -20,7 +20,8 @@
 <style>
 :root{
   --accent:#5ef2ff;--accent2:#ff4fa3;
-  --ink:#eef2f7;--ink2:rgba(238,242,247,.66);--ink3:rgba(238,242,247,.4);
+  /* label colours: secondary/tertiary raised so small text keeps WCAG AA (≥4.5:1) on the darkest glass */
+  --ink:#eef2f7;--ink2:rgba(238,242,247,.72);--ink3:rgba(238,242,247,.56);
   --glass:rgba(10,12,22,.56);--glass-hi:rgba(255,255,255,.07);--line:rgba(255,255,255,.12);
   --glass-strong:rgba(10,12,22,.86);
   --danger:#ff8c8c;--holiday:#ff8c8c;--sat:#8cc4ff;
@@ -31,7 +32,16 @@
   --r-xs:6px;--r-sm:8px;--r-md:12px;--r-lg:18px;--r-pill:999px;
   --sh-1:0 10px 28px -12px rgba(0,0,0,.75);--sh-2:0 22px 56px -18px rgba(0,0,0,.78);--sh-3:0 30px 80px -24px rgba(0,0,0,.78);
   --blur-s:14px;--blur-l:20px;
-  --fs-2xs:10.5px;--fs-xs:11.5px;--fs-sm:12.5px;--fs-md:13.5px;--fs-base:14px;--fs-lg:15px;
+  /* type: iOS-like hierarchy (Caption 2 → Title 2), scaled by the text-size setting (--ts; follows Dynamic Type when set to auto) */
+  --ts:1;
+  --fs-2xs:calc(11px * var(--ts));--fs-xs:calc(12px * var(--ts));--fs-sm:calc(13px * var(--ts));--fs-md:calc(15px * var(--ts));--fs-base:calc(15px * var(--ts));--fs-lg:calc(17px * var(--ts));--fs-xl:calc(20px * var(--ts));--fs-2xl:calc(22px * var(--ts));
+  /* fills & separators (iOS system fills, dark) */
+  --fill:rgba(120,120,128,.28);--fill2:rgba(120,120,128,.18);--fill3:rgba(118,118,128,.12);--sep:rgba(255,255,255,.1);
+  /* system colours (dark appearance) */
+  --sys-red:#ff453a;--sys-orange:#ff9f0a;--sys-yellow:#ffd60a;--sys-green:#30d158;--sys-blue:#0a84ff;--sys-gray:#8e8e93;
+  /* materials, thinnest → thickest */
+  --mat-thin:rgba(30,32,44,.44);--mat-regular:rgba(22,24,34,.62);--mat-thick:rgba(18,20,28,.84);--mat-chrome:rgba(26,28,38,.66);
+  --mat-blur:blur(24px) saturate(1.8);--mat-blur-thick:blur(30px) saturate(1.8);
   --ui:-apple-system,system-ui,BlinkMacSystemFont,"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic UI","YuGothic","Yu Gothic","Meiryo","Noto Sans JP",sans-serif;
   --mincho:"Hiragino Mincho ProN","Yu Mincho","YuMincho","Noto Serif JP","BIZ UDPMincho",serif;
   --mono:ui-monospace,"SF Mono","Menlo","Consolas","Roboto Mono",monospace;
@@ -570,6 +580,73 @@ body[data-scene="onsen"] .pw::after{content:"";position:absolute;top:6px;left:50
 body[data-scene="sea"] .pw{--pw-bg:linear-gradient(90deg,transparent 22px,rgba(190,60,60,.35) 22px 23px,transparent 23px),repeating-linear-gradient(180deg,transparent 0 27px,rgba(40,80,140,.15) 27px 28px),linear-gradient(180deg,#f1e9d3,#e6dbbd);--pw-ink:#16284a;--pw-dim:#5a6a86;--pw-line:rgba(22,40,74,.16);--pw-accent:#1f4f8f;--pw-on:#f4efe0;--pw-red:#b13b3b;--pw-blue:#1f4f8f;--pw-border:0;--pw-r:3px 12px 12px 3px;--pw-shadow:0 22px 38px -14px rgba(0,5,20,.9),inset 4px 0 0 #7a5a38;--pw-font:var(--serif),var(--mincho);--pw-num:var(--serif);--pw-hover:rgba(22,40,74,.08)}
 body[data-scene="orbit"] .pw{--pw-bg:linear-gradient(160deg,rgba(185,166,255,.16),rgba(111,240,255,.05));--pw-ink:#f1edff;--pw-dim:rgba(215,205,255,.66);--pw-line:rgba(185,166,255,.2);--pw-accent:#b9a6ff;--pw-on:#120c2a;--pw-red:#ff9bc4;--pw-blue:#6ff0ff;--pw-border:1px solid rgba(185,166,255,.36);--pw-r:18px;--pw-shadow:0 0 40px -10px rgba(185,166,255,.45),inset 0 1px 0 rgba(255,255,255,.12);--pw-font:"Avenir Next","Helvetica Neue",var(--ui);--pw-num:"Avenir Next","Helvetica Neue",var(--ui);--pw-hover:rgba(185,166,255,.12);--pw-glow:0 0 10px rgba(185,166,255,.4);--pw-blur:blur(12px)}
 
+/* ===== HIG layer: materials, type hierarchy and iOS-style controls on top of the component rules above */
+#player,#dock{background:var(--mat-chrome);-webkit-backdrop-filter:var(--mat-blur);backdrop-filter:var(--mat-blur);border-color:var(--sep)}
+.win{background:var(--mat-regular);-webkit-backdrop-filter:var(--mat-blur);backdrop-filter:var(--mat-blur);border-color:var(--sep)}
+.pop,.toast,.helpbox,.menu{background:var(--mat-thick);-webkit-backdrop-filter:var(--mat-blur-thick);backdrop-filter:var(--mat-blur-thick);border:1px solid var(--sep)}
+.win-h{padding:10px 8px 6px 18px}
+.win-h b{font-size:var(--fs-lg);font-weight:600;letter-spacing:.01em}
+.win-h .x{position:relative;border-radius:50%}
+.win-h .x:not(.pinb){width:30px;height:30px;background:var(--fill2);color:var(--ink2)}
+.win-h .x:not(.pinb) svg{width:14px;height:14px;stroke-width:2.4}
+.win-h .x::after{content:"";position:absolute;left:50%;top:50%;width:44px;height:44px;transform:translate(-50%,-50%)}
+.cal-h b{font-size:var(--fs-xl);font-weight:700}
+.lbl{font-size:var(--fs-sm);color:var(--ink2)}
+/* buttons: filled (primary), gray (default), plain (ghost) */
+.btn{border:0;background:var(--fill);font-weight:500}
+@media (hover:hover){.btn:hover{background:rgba(120,120,128,.38)}}
+.btn.pri{background:var(--accent);color:#07080d;font-weight:600}
+.btn.ghost{background:transparent;color:var(--accent)}
+@media (hover:hover){.btn.ghost:hover{background:var(--fill3)}}
+.btn:disabled{opacity:.38}
+/* fields */
+.in{border:0;background:var(--fill2);border-radius:10px}
+.in:focus{box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 70%,transparent)}
+.in::placeholder{color:var(--ink3)}
+/* capsules */
+.chip{border:0;background:var(--fill2);color:var(--ink)}
+.chip.on{background:var(--sel-bg);color:var(--accent);box-shadow:inset 0 0 0 1px var(--sel-line)}
+/* segmented control with a sliding thumb */
+.seg-tabs{position:relative;isolation:isolate;padding:2px;gap:0;border-radius:9px;background:var(--fill2)}
+.seg-tabs button{position:relative;z-index:1;border-radius:7px;color:var(--ink);font-weight:500}
+.seg-tabs button.on{background:transparent;box-shadow:none;font-weight:600}
+.seg-thumb{position:absolute;z-index:0;top:2px;bottom:2px;left:2px;width:calc((100% - 4px) / var(--n,3));transform:translateX(calc(100% * var(--i,0)));border-radius:7px;background:#5b5b60;box-shadow:0 3px 8px rgba(0,0,0,.16),0 1px 1px rgba(0,0,0,.08);pointer-events:none;transition:transform .36s var(--ease-spring)}
+/* switch */
+input[type=checkbox].switch,.chk input[type=checkbox]{-webkit-appearance:none;appearance:none;position:relative;flex:none;width:51px;height:31px;margin:0;border-radius:31px;background:rgba(120,120,128,.36);cursor:pointer;transition:background var(--dur-2)}
+input[type=checkbox].switch::before,.chk input[type=checkbox]::before{content:"";position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:50%;background:#fff;box-shadow:0 3px 8px rgba(0,0,0,.15),0 3px 1px rgba(0,0,0,.06);transition:transform var(--dur-3) var(--ease-spring)}
+input[type=checkbox].switch:checked,.chk input[type=checkbox]:checked{background:var(--sys-green)}
+input[type=checkbox].switch:checked::before,.chk input[type=checkbox]:checked::before{transform:translateX(20px)}
+.chk{flex-direction:row-reverse;justify-content:space-between;color:var(--ink);font-size:var(--fs-md)}
+/* slider */
+input[type=range]::-webkit-slider-runnable-track{height:4px;background:linear-gradient(90deg,var(--accent) var(--p,50%),rgba(120,120,128,.36) var(--p,50%))}
+input[type=range]::-webkit-slider-thumb{width:28px;height:28px;margin-top:-12px;background:#fff;box-shadow:0 .5px 4px rgba(0,0,0,.12),0 6px 13px rgba(0,0,0,.12)}
+input[type=range]::-moz-range-thumb{width:28px;height:28px;box-shadow:0 .5px 4px rgba(0,0,0,.12),0 6px 13px rgba(0,0,0,.12)}
+/* menu rows (track list, context menus) */
+.pop{padding:6px;border-radius:14px}
+.tr{border-radius:9px;min-height:44px}
+.tr+.tr{box-shadow:0 -1px 0 var(--sep)}
+.tr b{font-size:var(--fs-md);font-weight:500}
+/* banners slide in from the top centre, like system notifications */
+#toasts{left:50%;right:auto;top:calc(var(--sp-2) + env(safe-area-inset-top,0px));transform:translateX(-50%);align-items:stretch;width:min(420px,calc(100vw - 32px - env(safe-area-inset-left,0px) - env(safe-area-inset-right,0px)))}
+.toast{border-radius:20px;box-shadow:0 12px 40px -8px rgba(0,0,0,.55);touch-action:pan-x}
+.toast b{font-weight:600}
+@keyframes tin{from{opacity:0;transform:translateY(-28px) scale(.96)}}
+@keyframes tout{to{opacity:0;transform:translateY(-22px) scale(.97)}}
+/* continuous ("squircle") corners where the browser supports them */
+@supports (corner-shape:squircle){.win,#player,#dock,.toast,.pop,.helpbox,.btn,.in,.ib{corner-shape:squircle}}
+/* accessibility: reduced transparency → solid materials; increased contrast → stronger labels and edges */
+@media (prefers-reduced-transparency:reduce){
+  .win,#player,#dock,.pop,.toast,.helpbox,.menu,.ib,.stats,.typepill,.mini,#nowTask,.overlay,#focusBar,#rotate{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+  .win,#player,#dock,.pop,.toast,.helpbox,.menu{background:#16181f}
+  .overlay{background:rgba(3,4,8,.92)}
+}
+body.solid .win,body.solid #player,body.solid #dock,body.solid .pop,body.solid .toast,body.solid .helpbox,body.solid .menu{background:#16181f;-webkit-backdrop-filter:none;backdrop-filter:none}
+@media (prefers-contrast:more){
+  :root{--ink2:rgba(238,242,247,.86);--ink3:rgba(238,242,247,.74);--line:rgba(255,255,255,.34);--sep:rgba(255,255,255,.3);--fill:rgba(120,120,128,.46);--fill2:rgba(120,120,128,.36)}
+  .win,#player,#dock,.pop,.toast{border-color:rgba(255,255,255,.42)}
+  :focus-visible{outline-width:3px}
+}
+
 /* ===== touch: no tap delay / double-tap zoom / stray selection / tap flash; 44px targets on touch screens */
 *{-webkit-tap-highlight-color:transparent}
 :where(html,body,button,input,select,textarea,label,a,canvas,.sc){touch-action:manipulation}
@@ -589,13 +666,10 @@ input,textarea,[contenteditable="true"]{-webkit-user-select:text;user-select:tex
   .seg-tabs button{min-height:44px}
   .chip{height:36px;position:relative}
   .win-h{padding:4px 4px 2px 16px}
-  .win-h .x{width:44px;height:44px;border-radius:12px}
   .task .act button,.it .del{width:44px;height:44px}
   .prio{width:44px;height:44px}
   .chk{min-height:44px;margin-top:4px}
-  .chk input{width:22px;height:22px}
   input[type=range]{height:44px}
-  input[type=range]::-webkit-slider-thumb{width:24px;height:24px;margin-top:-10px}
   .stk-h{height:44px;padding:0 0 0 4px}
   .stk-h button{width:44px;height:44px}
   .pw-h{padding:2px 2px 0 14px}
@@ -686,7 +760,7 @@ input,textarea,[contenteditable="true"]{-webkit-user-select:text;user-select:tex
   .seg-tabs button{white-space:nowrap;padding:6px 4px}
   .ring{width:168px;height:168px}
   .ring .c b{font-size:38px}
-  #toasts{top:calc(var(--sp-2) + env(safe-area-inset-top,0px));right:calc(var(--sp-3) + env(safe-area-inset-right,0px));width:min(320px,40vw)}
+  #toasts{width:min(400px,56vw)}
   #focusBar{bottom:calc(var(--sp-3) + env(safe-area-inset-bottom,0px))}
   body.zen #clockWrap{transform:translateY(6vh) scale(1.1)}
   #zenHint{bottom:calc(var(--sp-3) + env(safe-area-inset-bottom,0px))}
@@ -1904,6 +1978,14 @@ function showEl(el){if(!el)return;clearTimeout(el._ht);el.classList.remove('leav
 function hideEl(el,ms=240){if(!el||el.hidden)return;if(calm()){el.hidden=true;return;}el.classList.add('leaving');clearTimeout(el._ht);el._ht=setTimeout(()=>{el.hidden=true;el.classList.remove('leaving');},ms);}
 const shown=el=>!!el&&!el.hidden&&!el.classList.contains('leaving');
 /* write to the DOM only when the value really changed (the 4Hz timer loop would otherwise relayout every tick) */
+/* segmented control: a sliding thumb under the selected segment, animated from where it was last time */
+const SEG={};
+function segs(root,key){root.querySelectorAll('.seg-tabs').forEach((g,gi)=>{const bs=[...g.querySelectorAll('button')],i=Math.max(0,bs.findIndex(b=>b.classList.contains('on'))),k=key+gi;
+  bs.forEach((b,j)=>{b.setAttribute('role','tab');b.setAttribute('aria-selected',String(j===i));});
+  let th=g.querySelector('.seg-thumb');if(!th){th=document.createElement('i');th.className='seg-thumb';th.setAttribute('aria-hidden','true');g.prepend(th);}
+  g.style.setProperty('--n',bs.length);const prev=SEG[k];SEG[k]=i;
+  if(prev!=null&&prev!==i&&!calm()){th.style.transition='none';g.style.setProperty('--i',prev);void th.offsetWidth;th.style.transition='';}
+  g.style.setProperty('--i',i);});}
 const setH=(el,h)=>{if(el&&el._h!==h){el._h=h;el.innerHTML=h;}},setT=(el,t)=>{if(el&&el.textContent!==t)el.textContent=t;};
 /* storage: a value of the wrong shape (hand-edited, truncated, from a future build) falls back to the default instead of breaking start-up */
 const kind=v=>Array.isArray(v)?'array':v===null?'null':typeof v;
@@ -1920,6 +2002,14 @@ const SCHEMA=2;
   /* v1 → v2: a returning user has data already, so the first-run tour is skipped for them */
   if(from<2&&['tasks','scene','stats','memo','stickies','reminders'].some(k=>localStorage.getItem('cell:'+k)!=null)&&localStorage.getItem('cell:onboarded')==null)store.set('onboarded',true);
   store.set('schema',SCHEMA);})();
+/* preferences (new in v2, all optional): language, text size, UI sounds, solid backgrounds */
+const Prefs={v:Object.assign({lang:'auto',ts:'auto',sound:true,solid:false},store.get('prefs',{})),
+  set(k,val){this.v[k]=val;store.set('prefs',this.v);this.apply();},
+  /* "auto" follows the iOS text size (Dynamic Type) through the -apple-system-body font */
+  dynamicType(){try{if(!CSS.supports('font','-apple-system-body'))return 1;const p=document.createElement('span');p.style.cssText='position:absolute;visibility:hidden;font:-apple-system-body';document.body.appendChild(p);const px=parseFloat(getComputedStyle(p).fontSize)||17;p.remove();return clamp(px/17,.85,1.4);}catch(e){return 1;}},
+  scale(){const t=this.v.ts;return t==='auto'?this.dynamicType():({s:.9,m:1,l:1.12,xl:1.26}[t]||1);},
+  apply(){const r=document.documentElement;r.style.setProperty('--ts',this.scale().toFixed(3));document.body.classList.toggle('solid',!!this.v.solid);}
+};
 
 /* ================= state (declared up-front) ================= */
 const SCENE_ORDER=['drive','camp','cafe','engawa','base','onsen','sea','orbit'];
@@ -3216,7 +3306,7 @@ Object.assign(T,{
       if(c==='auto')S.tcfg.auto=e.target.checked;else{const v=clamp(parseInt(e.target.value)||1,1,600);e.target.value=v;S.tcfg[c]=v;
         if(!this.running&&this.left===this.total){this.total=this.left=this.full();}}
       store.set('tcfg',S.tcfg);this.save();this.paint();if(c==='custom')this.render(b);};
-    this.paint();
+    segs(b,'timer');this.paint();
   },
   paint(){
     const e=WM.els.timer;if(e&&WM.isOpen('timer')){
@@ -3437,7 +3527,7 @@ const SW={acc:0,st:0,running:false,laps:[],
     <div class="sw"><b data-sw></b></div>
     <div class="tctl"><button class="btn" data-a="lap"></button><button class="btn pri" data-a="go">${this.running?ic('pause')+'止める':ic('play')+(this.acc?'再開':'開始')}</button></div>
     <div class="laps">${this.laps.map((l,i)=>`<div><span>ラップ ${this.laps.length-i}</span><span>${this.fmt(l.d,true).replace(/<\/?small>/g,'')}</span><span>${this.fmt(l.t,true).replace(/<\/?small>/g,'')}</span></div>`).join('')}</div>`;
-    const lap=b.querySelector('[data-a="lap"]');lap.textContent=this.running?'ラップ':'リセット';lap.disabled=!this.running&&!this.acc;
+    const lap=b.querySelector('[data-a="lap"]');lap.textContent=this.running?'ラップ':'リセット';lap.disabled=!this.running&&!this.acc;segs(b,'timer');
     b.onclick=e=>{const m=e.target.closest('[data-m]');if(m){if(m.dataset.m!=='stop'){T.view=null;if(m.dataset.m!==T.mode)T.setMode(m.dataset.m);T.render(b);}return;}
       const a=e.target.closest('[data-a]');if(!a)return;
       if(a.dataset.a==='go')this.toggle();
@@ -3734,7 +3824,7 @@ function thumbs(){SCENE_ORDER.forEach((id,i)=>setTimeout(()=>{try{const w=480,h=
 /* boot */
 function boot(){
   document.body.dataset.scene=S.scene;
-  SA.read();UI.init();Stage.resize();applyScene(S.scene,true);UI.vizOff=getComputedStyle($('#viz')).display==='none';
+  Prefs.apply();document.addEventListener('visibilitychange',()=>{if(!document.hidden)Prefs.apply();});SA.read();UI.init();Stage.resize();applyScene(S.scene,true);UI.vizOff=getComputedStyle($('#viz')).display==='none';
   Stk.render();document.body.dataset.dim=Focus.dim;Type.init();Type.apply();Pins.render();
   T.restore();UI.stats();UI.badges();UI.pinned();UI.mini();
   requestAnimationFrame(frame);thumbs();wake();
