@@ -42,6 +42,7 @@ body[data-scene="onsen"]{--accent:#ffcf8a;--accent2:#8fc6e0}
 body[data-scene="sea"]{--accent:#8ec5ff;--accent2:#ffe08a}
 body[data-scene="orbit"]{--accent:#b9a6ff;--accent2:#6ff0ff}
 *,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
 html,body{height:100%;margin:0;background:#04050a;overflow:hidden;overscroll-behavior:none}
 /* the page itself never scrolls or rubber-bands; only inner panels scroll (with momentum) */
 body{position:fixed;inset:0}
@@ -485,7 +486,7 @@ body.zen #stickies *{pointer-events:none!important}
 
 /* ===== type switch & casual frame */
 .typepill{height:38px;display:flex;align-items:center;padding:3px;gap:2px;border-radius:var(--r-md);background:var(--glass);border:1px solid var(--line);backdrop-filter:blur(var(--blur-s));-webkit-backdrop-filter:blur(var(--blur-s));font-size:var(--fs-sm)}
-.typepill span{padding:0 10px;height:30px;display:grid;place-items:center;border-radius:var(--r-sm);color:var(--ink2);transition:background .2s,color .2s}
+.typepill span{padding:0 10px;height:30px;display:grid;place-items:center;white-space:nowrap;border-radius:var(--r-sm);color:var(--ink2);transition:background .2s,color .2s}
 .typepill span:first-child{background:color-mix(in srgb,var(--accent) 22%,transparent);color:var(--ink);font-weight:600}
 @media (hover:hover){.typepill:hover span:last-child{color:var(--ink);background:rgba(255,255,255,.08)}}
 #casual{position:fixed;inset:0;width:100%;height:100%;border:0;z-index:20;background:#16181b;display:block}
@@ -603,7 +604,7 @@ input,textarea,[contenteditable="true"]{-webkit-user-select:text;user-select:tex
 @media (max-width:1400px){
   #bottom{grid-template-columns:1fr auto;grid-template-areas:"scenes scenes" "player dock"}
 }
-@media (max-width:760px){
+@media (max-width:760px) and (min-height:501px){
   #top{grid-template-columns:1fr;justify-items:center;gap:8px}
   #brand{display:none}
   #status{justify-self:center;order:-1}
@@ -620,6 +621,63 @@ input,textarea,[contenteditable="true"]{-webkit-user-select:text;user-select:tex
   .win-h{cursor:default}
   #viz{display:none}
 }
+/* ===== phone landscape (short & wide): one slim top bar, one bottom bar; transport at the left thumb, tools at the right thumb */
+@media (max-height:500px) and (orientation:landscape){
+  #ui{padding:calc(var(--sp-2) + env(safe-area-inset-top,0px)) calc(var(--sp-3) + env(safe-area-inset-right,0px)) calc(var(--sp-2) + env(safe-area-inset-bottom,0px)) calc(var(--sp-3) + env(safe-area-inset-left,0px))}
+  #top{gap:var(--sp-3)}
+  #brand{gap:var(--sp-2);min-width:0}
+  .logo i{width:16px;height:20px;font-size:10px}
+  .where{min-width:0}
+  .where b{font-size:var(--fs-sm);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .where small{display:none}
+  #clockWrap{gap:6px}
+  #clock{zoom:.58}
+  #status{position:relative;gap:6px}
+  .stats{display:none}
+  .typepill{font-size:var(--fs-xs)}
+  .typepill span{padding:0 8px}
+  /* the running timer floats under the buttons instead of widening the bar */
+  #status .mini{position:absolute;top:calc(100% + var(--sp-2));right:0}
+  #bottom{grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:"player scenes dock";gap:10px;align-items:end}
+  #player{padding:6px 8px 6px 6px;gap:var(--sp-2)}
+  .meta{width:118px;flex:none}
+  #viz{display:none}
+  .pctl{gap:2px}
+  #scenes{justify-content:flex-start;gap:6px;padding:8px 2px 0;scroll-snap-type:x proximity;scroll-padding:0 2px}
+  .sc{scroll-snap-align:start;gap:4px}
+  .sc .th{width:58px;height:36px;border-radius:var(--r-sm)}
+  .sc span{font-size:var(--fs-2xs);letter-spacing:.04em}
+  .sc.on{transform:translateY(-3px)}
+  #dock{display:grid;grid-template-columns:repeat(4,44px);grid-auto-rows:44px;gap:2px;padding:4px}
+  /* windows become a sheet on the left; the tool pad on the right stays reachable to switch tools */
+  .win{left:calc(var(--sp-2) + env(safe-area-inset-left,0px))!important;top:calc(var(--sp-2) + env(safe-area-inset-top,0px))!important;bottom:calc(var(--sp-2) + env(safe-area-inset-bottom,0px))!important;right:auto!important;width:min(360px,52vw)!important;max-height:none;transform:translateX(-28px)}
+  .win.open{transform:none}
+  .win-h{cursor:default}
+  .win-b{flex:1;padding-bottom:var(--sp-3)}
+  .seg-tabs button{white-space:nowrap;padding:6px 4px}
+  .ring{width:168px;height:168px}
+  .ring .c b{font-size:38px}
+  #toasts{top:calc(var(--sp-2) + env(safe-area-inset-top,0px));right:calc(var(--sp-3) + env(safe-area-inset-right,0px));width:min(320px,40vw)}
+  #focusBar{bottom:calc(var(--sp-3) + env(safe-area-inset-bottom,0px))}
+  body.zen #clockWrap{transform:translateY(6vh) scale(1.1)}
+  #zenHint{bottom:calc(var(--sp-3) + env(safe-area-inset-bottom,0px))}
+  .br{gap:var(--sp-4)}
+  .br-c{width:min(52vh,280px)}
+  .helpbox{max-height:calc(100dvh - 24px);overflow:auto;padding:var(--sp-4) var(--sp-5)}
+  .keys{gap:6px 12px}
+  .b-in{padding:var(--sp-3)}
+  .b-logo i{width:48px;height:58px;font-size:27px}
+  .b-sub{margin-top:16px;font-size:var(--fs-md)}
+  .b-rooms{margin:6px 0 18px}
+  .b-note{margin-top:10px}
+}
+@media (max-height:500px) and (orientation:landscape) and (max-width:700px){
+  #clock{zoom:.5}
+  .typepill span:first-child{display:none}
+  .meta{width:96px}
+}
+/* no keyboard on a phone: the shortcut list button is dropped there (the ? key still opens it) */
+@media (max-height:500px) and (orientation:landscape) and (hover:none){#btnHelp{display:none}}
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
   /* the VFD marquee would end off-screen; show the track name still instead */
@@ -1123,13 +1181,33 @@ body.focus .hero{animation:cfade .36s cubic-bezier(.22,1,.36,1)}
 @keyframes cpop{from{opacity:0;transform:scale(.94)}}
 
 @media (max-width:1000px){ .grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)} .card.tasks{grid-column:1/-1;order:-1} }
-@media (max-width:680px){
+@media (max-width:680px) and (min-height:501px){
   .app{padding:12px 12px 24px}
   .bar{flex-wrap:wrap;gap:10px}
   .modes{margin-left:0;width:100%}
   .grid{grid-template-columns:minmax(0,1fr)}
   .hero{padding:44px 12px 22px;min-height:240px}
   .tools{top:10px;right:10px}
+  .led{display:none}
+}
+@media (max-height:500px) and (orientation:landscape){
+  html,body{height:100%;overflow:hidden}
+  body{min-height:0}
+  .app{max-width:none;height:100%;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);column-gap:12px;
+    padding:calc(8px + var(--sat,env(safe-area-inset-top,0px))) calc(12px + var(--sar,env(safe-area-inset-right,0px))) calc(8px + var(--sab,env(safe-area-inset-bottom,0px))) calc(12px + var(--sal,env(safe-area-inset-left,0px)))}
+  :root{padding:0}
+  .bar{grid-column:1/-1;margin-bottom:8px;gap:12px}
+  .logo{font-size:16px}
+  body[data-mode] .hero{grid-column:1;grid-row:2;margin:0;min-height:0;padding:44px 12px 14px}
+  .clock{font-size:clamp(44px,min(11vw,24vh),120px);margin:8px 0 12px}
+  .date{font-size:13px}
+  .meta{margin-top:10px}
+  .grid{grid-column:2;grid-row:2;grid-template-columns:minmax(0,1fr);gap:12px;overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;align-content:start;padding-bottom:8px;border-radius:var(--radius-lg)}
+  .card.tasks{order:-1}
+  .tlist{max-height:none}
+  .foot{display:none}
+  body.focus .app{display:block;padding:0}
+  body.focus .hero{min-height:100%;height:100%}
   .led{display:none}
 }
 /* touch: no tap delay / double-tap zoom / stray selection / tap flash; 44px targets on touch screens */
@@ -3001,7 +3079,8 @@ const ICON={
 const ic=n=>`<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${ICON[n]||''}</svg>`;
 
 /* ================= helpers ================= */
-const mobile=()=>innerWidth<=760;
+const compact=()=>innerHeight<=500&&innerWidth>innerHeight;
+const mobile=()=>innerWidth<=760||compact();
 function toast(title,body,actions,ms){
   if(typeof Type!=='undefined'&&Type.cur==='casual'){const w=Type.win();if(w){if(actions&&actions.length)w.ring(title,body||'',false);else w.toast(body?`${title}　${body}`:title);return document.createElement('div');}}
   const el=document.createElement('div');el.className='toast';el.setAttribute('role','status');
@@ -3504,6 +3583,7 @@ UI={
     $('#tracklist').onclick=e=>{const b=e.target.closest('[data-t]');if(!b)return;Player.setTrack(+b.dataset.t);if(!Player.playing)Player.play();hideEl($('#tracklist'));};
     document.addEventListener('click',e=>{if(!e.target.closest('#player'))hideEl($('#tracklist'));});
     $('#btnZen').onclick=()=>zen();
+    if(!(document.fullscreenEnabled||document.webkitFullscreenEnabled)||matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches)$('#btnFull').hidden=true;
     $('#btnFull').onclick=()=>{try{document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen().catch(()=>toast('全画面にできませんでした','ブラウザの設定で全画面表示が制限されています。'));}catch(e){}};
     $('#btnHelp').onclick=()=>help();
     $('#help').onclick=e=>{if(e.target.id==='help')help(false);};
