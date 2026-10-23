@@ -1,5 +1,5 @@
 // Regressions for bugs found by the independent reviews (each one reproduced before it was fixed).
-import { test, expect, openApp, enter, openWin } from './fixtures.mjs';
+import { test, expect, openApp, enter, openWin, openModes } from './fixtures.mjs';
 
 test.beforeEach(async ({ page }) => { await openApp(page); await enter(page); });
 
@@ -63,7 +63,7 @@ test('tapping Undo twice restores the task only once', async ({ page }) => {
 });
 
 test('the Break mood’s 5-minute timer reports 5 minutes and resets to 5', async ({ page }) => {
-  await page.locator('#brand').tap();
+  await openModes(page);
   await page.locator('.mode-c[data-mode="break"]').tap();
   const win = await openWin(page, 'timer');
   await expect(win.locator('[data-time]')).toHaveText(/0[45]:\d\d/);
@@ -72,7 +72,7 @@ test('the Break mood’s 5-minute timer reports 5 minutes and resets to 5', asyn
 });
 
 test('closing the night screen with Esc leaves the sleep mood (no stale highlight)', async ({ page }) => {
-  await page.locator('#brand').tap();
+  await openModes(page);
   await page.locator('.mode-c[data-mode="sleep"]').tap();
   await expect(page.locator('#night')).toBeVisible();
   await page.keyboard.press('Escape');

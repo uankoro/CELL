@@ -1,5 +1,5 @@
 // New in v2: modes, sleep darkness, settings, month records, first-run tour.
-import { test, expect, openApp, enter, openWin } from './fixtures.mjs';
+import { test, expect, openApp, enter, openWin, openModes } from './fixtures.mjs';
 
 const k = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
@@ -7,12 +7,12 @@ test.describe('modes (過ごし方)', () => {
   test.beforeEach(async ({ page }) => { await openApp(page); await enter(page); });
 
   test('the room name opens the modes sheet', async ({ page }) => {
-    await page.locator('#brand').tap();
+    await openModes(page);
     await expect(page.locator('.win.open[data-win="modes"] .mode-c')).toHaveCount(8);
   });
 
   test('study → café scene, rainy track, FOCUS view, pomodoro', async ({ page }) => {
-    await page.locator('#brand').tap();
+    await openModes(page);
     await page.locator('.mode-c[data-mode="study"]').tap();
     await expect(page.locator('body')).toHaveAttribute('data-scene', 'cafe');
     await expect(page.locator('body')).toHaveClass(/\bfocus\b/);
@@ -23,14 +23,14 @@ test.describe('modes (過ごし方)', () => {
   });
 
   test('break → campfire and a running 5-minute timer', async ({ page }) => {
-    await page.locator('#brand').tap();
+    await openModes(page);
     await page.locator('.mode-c[data-mode="break"]').tap();
     await expect(page.locator('body')).toHaveAttribute('data-scene', 'camp');
     await expect(page.locator('#mini')).toContainText(/0[45]:\d\d/);
   });
 
   test('reading → zen, meditation → breathing', async ({ page }) => {
-    await page.locator('#brand').tap();
+    await openModes(page);
     await page.locator('.mode-c[data-mode="reading"]').tap();
     await expect(page.locator('body')).toHaveClass(/\bzen\b/);
     await page.keyboard.press('p');
@@ -40,14 +40,14 @@ test.describe('modes (過ごし方)', () => {
   });
 
   test('kids → 15-minute focus with the big clock', async ({ page }) => {
-    await page.locator('#brand').tap();
+    await openModes(page);
     await page.locator('.mode-c[data-mode="kids"]').tap();
     await expect(page.locator('body')).toHaveClass(/\bfocus\b/);
     await expect(page.locator('#focusBar [data-ft]')).toHaveText(/1[45]:\d\d/);
   });
 
   test('sleep → waves, music off, 30-minute sleep timer, darkness; wake up restores', async ({ page }) => {
-    await page.locator('#brand').tap();
+    await openModes(page);
     await page.locator('.mode-c[data-mode="sleep"]').tap();
     await expect(page.locator('body')).toHaveAttribute('data-scene', 'sea');
     await expect(page.locator('#night')).toBeVisible();

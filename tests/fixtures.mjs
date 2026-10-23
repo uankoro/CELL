@@ -45,10 +45,23 @@ export async function enter(page) {
   await expect(page.locator('#boot')).toHaveCount(0, { timeout: 3000 });
 }
 
+/** wait until a sheet has finished springing open, so taps land where they are aimed */
+export async function settled(page, win) {
+  await expect(win).toBeVisible();
+  await page.waitForFunction(el => el && el.getAnimations().length === 0 && getComputedStyle(el).opacity === '1' && ['none', 'matrix(1, 0, 0, 1, 0, 0)'].includes(getComputedStyle(el).transform), await win.elementHandle());
+}
+
 export async function openWin(page, id) {
   await page.locator(`#dock [data-w="${id}"]`).tap();
   const win = page.locator(`.win.open[data-win="${id}"]`);
-  await expect(win).toBeVisible();
+  await settled(page, win);
+  return win;
+}
+
+export async function openModes(page) {
+  await page.locator('#brand').tap();
+  const win = page.locator('.win.open[data-win="modes"]');
+  await settled(page, win);
   return win;
 }
 

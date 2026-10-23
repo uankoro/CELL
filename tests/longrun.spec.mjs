@@ -1,5 +1,5 @@
 // Long sessions: music + ambience + timers for a long (simulated) time must not grow memory, DOM or timers without bound.
-import { test, expect, openApp, enter, openWin } from './fixtures.mjs';
+import { test, expect, openApp, enter, openWin, openModes } from './fixtures.mjs';
 
 test.describe('long-running session', () => {
   test.skip(({ browserName }) => browserName !== 'chromium', 'heap metrics need the Chromium DevTools protocol');
@@ -54,7 +54,7 @@ test.describe('long-running session', () => {
     await page.clock.install();
     await openApp(page);
     await enter(page);
-    await page.locator('#brand').tap();
+    await openModes(page);
     await page.locator('.mode-c[data-mode="sleep"]').tap();
     await page.clock.runFor(1000);
     await expect(page.locator('#night')).toBeVisible();

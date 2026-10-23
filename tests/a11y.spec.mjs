@@ -1,6 +1,6 @@
 // Accessibility: axe-core (WCAG 2.x A/AA rules) on every screen. Serious and critical violations fail the test.
 import AxeBuilder from '@axe-core/playwright';
-import { test, expect, openApp, enter, openWin } from './fixtures.mjs';
+import { test, expect, openApp, enter, openWin, openModes } from './fixtures.mjs';
 
 async function audit(page, name) {
   const r = await new AxeBuilder({ page })
@@ -20,7 +20,7 @@ test('boot, main screen, every window, modes, settings, help', async ({ page }) 
   await audit(page, 'main');
   for (const id of ['timer', 'calendar', 'reminders', 'tasks', 'mixer', 'memo', 'log']) { await openWin(page, id); await audit(page, id); }
   await page.keyboard.press('Escape');
-  await page.locator('#brand').tap();
+  await openModes(page);
   await audit(page, 'modes');
   await page.keyboard.press(',');
   await audit(page, 'settings');
@@ -35,7 +35,7 @@ test('first-run tour and sleep screen', async ({ page }) => {
   await expect(page.locator('#tour')).toBeVisible();
   await audit(page, 'tour');
   await page.locator('#tour [data-t="skip"]').tap();
-  await page.locator('#brand').tap();
+  await openModes(page);
   await page.locator('.mode-c[data-mode="sleep"]').tap();
   await expect(page.locator('#night')).toBeVisible();
   await audit(page, 'night');

@@ -90,11 +90,9 @@ test('swipe a banner up to dismiss it', async ({ page }) => {
 test('a flick whose moves were coalesced away (down → up only) still swipes the row', async ({ page }) => {
   const win = await openWin(page, 'tasks');
   await addTask(page, win, '一瞬のフリック');
-  await page.evaluate(() => {
-    const el = [...document.querySelectorAll('.win.open .task')].find(r => r.textContent.includes('一瞬のフリック')).querySelector('.tx');
-    const b = el.getBoundingClientRect(), x = b.left + 20, y = b.top + b.height / 2, o = { bubbles: true, pointerId: 7, pointerType: 'touch', isPrimary: true };
-    el.dispatchEvent(new PointerEvent('pointerdown', { ...o, clientX: x, clientY: y, buttons: 1 }));
-    window.dispatchEvent(new PointerEvent('pointerup', { ...o, clientX: x + 170, clientY: y }));
-  });
+  // simulate the browser coalescing the moves of a very fast flick: the app only sees pointerdown and pointerup
+  await page.evaluate(() => { window.__block = e => e.stopImmediatePropagation(); addEventListener('pointermove', window.__block, true); });
+  await drag(page, win.locator('.task', { hasText: '一瞬のフリック' }).locator('.tx'), 170, 0, 4);
+  await page.evaluate(() => removeEventListener('pointermove', window.__block, true));
   await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('cell:tasks'))[0].done)).toBe(true);
 });
