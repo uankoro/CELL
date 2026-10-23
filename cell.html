@@ -15,6 +15,9 @@
   --mincho:"Hiragino Mincho ProN","Yu Mincho","YuMincho","Noto Serif JP","BIZ UDPMincho",serif;
   --mono:ui-monospace,"SF Mono","Menlo","Consolas","Roboto Mono",monospace;
   --serif:"Iowan Old Style","Palatino Linotype","Palatino","Book Antiqua",Georgia,serif;
+  /* motion: spring-like curves approximated with cubic-bezier */
+  --ease-spring:cubic-bezier(.34,1.56,.64,1);--ease-out:cubic-bezier(.22,1,.36,1);--ease-in:cubic-bezier(.4,0,1,1);
+  --dur-1:.12s;--dur-2:.24s;--dur-3:.36s;
   color-scheme:dark;box-sizing:border-box;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--ink:#eef2f7}}
@@ -58,7 +61,6 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;stro
 
 .ib{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:var(--glass);border:1px solid var(--line);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);transition:background .15s,border-color .15s,color .15s,transform .1s;position:relative}
 .ib:hover{background:rgba(255,255,255,.12)}
-.ib:active{transform:scale(.93)}
 .ib.on{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 55%,transparent)}
 .ib.sm{width:32px;height:32px;border-radius:10px}
 [data-tip]:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);white-space:nowrap;font-size:11.5px;padding:4px 9px;border-radius:7px;background:rgba(0,0,0,.82);color:#fff;pointer-events:none;z-index:50}
@@ -81,7 +83,6 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;stro
 .play svg{width:20px;height:20px;fill:currentColor;stroke:none}
 .play.beat{animation:beat .42s ease-out}
 @keyframes beat{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--accent) 55%,transparent)}100%{box-shadow:0 0 0 12px transparent}}
-.play:active{transform:scale(.92)}
 .meta{flex:1;min-width:0;text-align:left;display:flex;flex-direction:column;border-radius:8px;padding:2px 4px}
 .meta b{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .meta small{font-size:11.5px;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -1209,6 +1210,18 @@ const dkey=dt=>key(dt.getFullYear(),dt.getMonth()+1,dt.getDate());
 const uid=()=>Math.random().toString(36).slice(2,10)+Date.now().toString(36).slice(-4);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
+/* press feedback (same feel as the chill side): shrink on touch-down, spring back on release */
+(function(){
+  let cur=null;
+  const up=()=>{ const el=cur; cur=null; if(!el||!el._pa) return; const cs=getComputedStyle(el);
+    const from=reduce?{opacity:[cs.opacity,1]}:{scale:[cs.scale==="none"?"1":cs.scale,"1"]}; el._pa.cancel();
+    el._pa=el.animate(from,{duration:reduce?120:340,easing:reduce?"ease-out":"cubic-bezier(.34,1.56,.64,1)"}); };
+  document.addEventListener("pointerdown",e=>{ if(e.button>0) return; const el=e.target.closest&&e.target.closest("button"); if(!el||el.disabled) return;
+    up(); cur=el; const r=el.getBoundingClientRect(), k=Math.max(.94,1-4/Math.max(r.width,r.height,1)); if(el._pa) el._pa.cancel();
+    el._pa=el.animate(reduce?{opacity:[1,.6]}:{scale:[1,k]},{duration:90,easing:"ease-out",fill:"forwards"}); },{passive:true});
+  ["pointerup","pointercancel"].forEach(t=>document.addEventListener(t,up,{passive:true}));
+  document.addEventListener("touchstart",()=>{},{passive:true});
+})();
 
 /* ================= modes ================= */
 const MODES=[
@@ -1642,6 +1655,18 @@ const JPFONT='"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Meiryo","
 const MINCHO='"Hiragino Mincho ProN","Yu Mincho","YuMincho","Noto Serif JP",serif';
 const MONO='ui-monospace,"SF Mono",Menlo,Consolas,monospace';
 const REDUCED=matchMedia('(prefers-reduced-motion: reduce)').matches;
+/* press feedback: shrink on touch-down, spring back on release (Web Animations, so it never fights CSS transitions) */
+const Press={sel:'button,.sc,label.chk,[data-press]',el:null,
+  init(doc){doc.addEventListener('pointerdown',e=>{if(e.button>0)return;const el=e.target.closest&&e.target.closest(this.sel);if(!el||el.disabled)return;this.down(el);},{passive:true});
+    for(const t of ['pointerup','pointercancel'])doc.addEventListener(t,()=>this.up(),{passive:true});
+    doc.addEventListener('touchstart',()=>{},{passive:true});},
+  down(el){this.up();this.el=el;const r=el.getBoundingClientRect(),k=Math.max(.94,1-4/Math.max(r.width,r.height,1));
+    if(el._pa)el._pa.cancel();el._pa=el.animate(REDUCED?{opacity:[1,.6]}:{scale:[1,k]},{duration:90,easing:'ease-out',fill:'forwards'});},
+  up(){const el=this.el;if(!el)return;this.el=null;const a=el._pa;if(!a)return;
+    const cs=getComputedStyle(el),from=REDUCED?{opacity:[cs.opacity,1]}:{scale:[cs.scale==='none'?'1':cs.scale,'1']};
+    a.cancel();el._pa=el.animate(from,{duration:REDUCED?120:340,easing:REDUCED?'ease-out':'cubic-bezier(.34,1.56,.64,1)'});}
+};
+Press.init(document);
 const store={
   get(k,d){try{const v=localStorage.getItem('cell:'+k);return v==null?d:JSON.parse(v);}catch(e){return d;}},
   set(k,v){try{localStorage.setItem('cell:'+k,JSON.stringify(v));}catch(e){}}
