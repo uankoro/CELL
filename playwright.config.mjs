@@ -1,5 +1,6 @@
 // E2E tests: Chromium and WebKit (closest to iPhone Safari), iPhone SE / standard / Pro Max in landscape, touch on.
 import { defineConfig } from '@playwright/test';
+import os from 'node:os';
 
 const PHONES = [
   { name: 'se', viewport: { width: 667, height: 375 } },
@@ -14,7 +15,7 @@ export default defineConfig({
   expect: { timeout: 5_000 },
   fullyParallel: true,
   retries: process.env.CI ? 1 : 0,
-  workers: process.env.CI ? 2 : 4,
+  workers: process.env.CI ? 2 : Math.max(1, Math.min(3, Math.floor(os.cpus().length / 2))),
   reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : [['list']],
   use: {
     baseURL: 'http://localhost:4173/CELL/',

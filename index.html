@@ -628,10 +628,43 @@ input[type=range]::-moz-range-thumb{width:28px;height:28px;box-shadow:0 .5px 4px
 .tr b{font-size:var(--fs-md);font-weight:500}
 /* banners slide in from the top centre, like system notifications */
 #toasts{left:50%;right:auto;top:calc(var(--sp-2) + env(safe-area-inset-top,0px));transform:translateX(-50%);align-items:stretch;width:min(420px,calc(100vw - 32px - env(safe-area-inset-left,0px) - env(safe-area-inset-right,0px)))}
-.toast{border-radius:20px;box-shadow:0 12px 40px -8px rgba(0,0,0,.55);touch-action:pan-x}
+.toast{border-radius:20px;box-shadow:0 12px 40px -8px rgba(0,0,0,.55);touch-action:none}
 .toast b{font-weight:600}
 @keyframes tin{from{opacity:0;transform:translateY(-28px) scale(.96)}}
 @keyframes tout{to{opacity:0;transform:translateY(-22px) scale(.97)}}
+/* gestures: horizontal drags go to JS, vertical scrolling stays native */
+.win,.task,.it[data-id]{touch-action:pan-y}
+[data-list],.win-b{position:relative}
+.task.swiping,.it.swiping{position:relative;z-index:1;background:#1c1e28;border-radius:var(--r-md)}
+.sw-under{position:absolute;left:0;right:0;z-index:0;display:flex;align-items:center;gap:8px;padding:0 18px;border-radius:var(--r-md);font-weight:600;font-size:var(--fs-sm);color:#fff;pointer-events:none;opacity:.6;transition:opacity var(--dur-1)}
+.sw-under.r{justify-content:flex-start}.sw-under.l{justify-content:flex-end;flex-direction:row-reverse}
+.sw-under.ok{background:var(--sys-green)}.sw-under.del{background:var(--sys-red)}
+.sw-under.arm{opacity:1}
+.sw-under svg{width:20px;height:20px;stroke-width:2.2;transition:transform var(--dur-2) var(--ease-spring)}
+.sw-under.arm svg{transform:scale(1.18)}
+.hint{font-size:var(--fs-xs);color:var(--ink3);margin:10px 0 0;line-height:1.6}
+/* context menu */
+.menu-bd{position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.18)}
+.menu{position:fixed;z-index:71;min-width:230px;max-width:min(300px,80vw);padding:6px;border-radius:14px;box-shadow:0 20px 50px -10px rgba(0,0,0,.6);animation:menuin var(--dur-3) var(--ease-spring)}
+.menu.leaving{animation:menuout .18s var(--ease-in) forwards}
+@keyframes menuin{from{opacity:0;transform:scale(.86)}}
+@keyframes menuout{to{opacity:0;transform:scale(.94)}}
+.menu-t{padding:6px 12px 8px;font-size:var(--fs-xs);color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-bottom:1px solid var(--sep);margin-bottom:4px}
+.menu button{display:flex;align-items:center;gap:12px;width:100%;min-height:44px;padding:0 12px;border-radius:9px;font-size:var(--fs-md);text-align:left}
+.menu button+button{box-shadow:0 -1px 0 var(--sep)}
+.menu button svg{width:18px;height:18px;color:var(--ink2)}
+.menu button.danger,.menu button.danger svg{color:var(--sys-red)}
+@media (hover:hover){.menu button:hover{background:var(--fill2)}}
+.menu button:focus-visible{outline:none;background:var(--fill2)}
+/* HUD */
+#hud{position:fixed;left:50%;top:50%;z-index:80;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;min-width:150px;min-height:150px;padding:18px;border-radius:22px;
+  background:var(--mat-thick);-webkit-backdrop-filter:var(--mat-blur-thick);backdrop-filter:var(--mat-blur-thick);color:var(--ink);font-size:var(--fs-md);font-weight:600;text-align:center;
+  transform:translate(-50%,-50%) scale(.9);opacity:0;pointer-events:none;transition:opacity var(--dur-2) var(--ease-out),transform var(--dur-3) var(--ease-spring)}
+#hud.show{opacity:1;transform:translate(-50%,-50%)}
+#hud svg{width:40px;height:40px;stroke-width:1.5;color:var(--accent)}
+@media (max-height:500px){#hud{min-width:130px;min-height:120px}}
+/* sheet grabber (phone landscape): the sheet is dragged to the left to close */
+@media (max-height:500px) and (orientation:landscape){.win::after{content:"";position:absolute;right:5px;top:50%;width:4px;height:38px;margin-top:-19px;border-radius:2px;background:rgba(255,255,255,.24)}}
 /* continuous ("squircle") corners where the browser supports them */
 @supports (corner-shape:squircle){.win,#player,#dock,.toast,.pop,.helpbox,.btn,.in,.ib{corner-shape:squircle}}
 /* accessibility: reduced transparency → solid materials; increased contrast → stronger labels and edges */
@@ -3235,6 +3268,14 @@ function toast(title,body,actions,ms){
   el.innerHTML=`<b>${esc(title)}</b>${body?`<p>${esc(body)}</p>`:''}${actions&&actions.length?`<div class="row">${actions.map((a,i)=>`<button class="btn${i===0?' pri':''}" data-i="${i}">${esc(a.label)}</button>`).join('')}<button class="btn ghost" data-i="x">閉じる</button></div>`:''}`;
   const kill=()=>{if(!el.isConnected)return;el.classList.add('out');setTimeout(()=>el.remove(),260);};
   el.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const i=b.dataset.i;if(i!=='x'&&actions[i])actions[i].fn();kill();});
+  /* swipe the banner up to dismiss it */
+  el.addEventListener('pointerdown',e=>{if(e.target.closest('button'))return;const y0=e.clientY,id=e.pointerId,tr=tracker();let dy=0;
+    const mv=m=>{if(m.pointerId!==id)return;dy=m.clientY-y0;tr.add(0,m.clientY);el.style.transform=`translateY(${dy<0?dy:rubber(dy,14)}px)`;};
+    const up=u=>{if(u.pointerId!==id)return;removeEventListener('pointermove',mv);removeEventListener('pointerup',up);removeEventListener('pointercancel',up);
+      const v=tr.v().y,set=y=>{el.style.transform=`translateY(${y}px)`;};
+      if(dy<-28||v<-500)spring({from:dy,to:-el.offsetHeight-40,v:Math.min(v,-400),onUpdate:set,onDone:()=>el.remove()});
+      else spring({from:dy<0?dy:rubber(dy,14),to:0,v,onUpdate:set,onDone:()=>{el.style.transform='';}});};
+    addEventListener('pointermove',mv,{passive:true});addEventListener('pointerup',up);addEventListener('pointercancel',up);});
   $('#toasts').appendChild(el);setTimeout(kill,ms||(actions?20000:5200));return el;
 }
 function notify(title,body){try{if('Notification' in window&&Notification.permission==='granted'&&document.hidden)new Notification(title,{body});}catch(e){}}
@@ -3327,6 +3368,18 @@ const Tasks={
     if(t.done&&S.pinned===id){S.pinned=null;store.set('pinned',null);toast('いまやること、完了','次のタスクを選ぶと時計の下に表示されます。');}this.save();},
   remove(id){S.tasks=S.tasks.filter(x=>x.id!==id);if(S.pinned===id){S.pinned=null;store.set('pinned',null);}this.save();},
   pin(id){S.pinned=S.pinned===id?null:id;store.set('pinned',S.pinned);this.save();},
+  /* delete with a 6-second undo, as in Reminders/Mail */
+  removeUndo(id){const i=S.tasks.findIndex(x=>x.id===id);if(i<0)return;const t=S.tasks[i],wasPin=S.pinned===id;this.remove(id);UIS.play('delete');
+    toast('タスクを削除しました',t.text,[{label:'取り消す',fn:()=>{S.tasks.splice(Math.min(i,S.tasks.length),0,t);if(wasPin){S.pinned=id;store.set('pinned',id);}this.save();UI.refreshWin('tasks');}}],6000);},
+  menu(b,row,x,y){const id=row.dataset.id,t=S.tasks.find(k=>k.id===id);if(!t)return;const tk=dkey(),P=['ふつう','重要','最優先'];
+    const it=[];
+    if(!t.done)it.push({icon:'pin',label:S.pinned===id?'いまやることを解除':'いまやることにする',fn:()=>{this.pin(id);this.render(b);}});
+    it.push({icon:'check',label:t.done?'未完了に戻す':'完了にする',fn:()=>{this.toggle(id);this.render(b);}});
+    it.push({icon:'memo',label:'書き直す',fn:()=>{const tx=b.querySelector(`.task[data-id="${id}"] .tx`);if(tx)b.ondblclick({target:tx});}});
+    it.push({icon:'tasks',label:`優先度：${P[((t.pri||0)+1)%3]}にする`,fn:()=>{t.pri=((t.pri||0)+1)%3;this.save();this.render(b);}});
+    it.push({icon:'calendar',label:t.due===tk?'期限を明日にする':'期限を今日にする',fn:()=>{t.due=t.due===tk?addDays(tk,1):tk;this.save();this.render(b);}});
+    it.push({icon:'trash',label:'削除',danger:true,fn:()=>{this.removeUndo(id);this.render(b);}});
+    Menu.open(x,y,it,t.text);},
   render(b){
     const open=S.tasks.filter(t=>!t.done),done=S.tasks.filter(t=>t.done);
     const list=S.taskFilter==='open'?open:S.taskFilter==='done'?done:S.tasks;
@@ -3339,11 +3392,15 @@ const Tasks={
       return`<div class="task p${t.pri} ${t.done?'done':''}" data-id="${t.id}"><button class="ck" data-a="done" aria-label="${t.done?'未完了に戻す':'完了にする'}">${ic('check')}</button>
       <div class="tx">${esc(t.text)} ${t.due?`<span class="due${late?' late':''}">${fmtDue(t.due)}${late?' 期限切れ':''}</span>`:''} ${t.pomos?`<span class="pomo">集中×${t.pomos}</span>`:''}</div>
       <div class="act">${t.done?'':`<button data-a="pin" class="${S.pinned===t.id?'pinned':''}" aria-label="いまやることに設定" title="いまやることに設定">${ic('pin')}</button>`}<button data-a="del" aria-label="削除" title="削除">${ic('trash')}</button></div></div>`;}).join('')
-      :`<div class="empty">${S.taskFilter==='done'?'完了したタスクはまだありません。':'やることを一つ書いてみましょう。<br>ピンを押すと時計の下に表示されます。'}</div>`}</div>${list.length?`<p style="font-size:11px;color:var(--ink3);margin:8px 0 0">文字を${matchMedia('(pointer:coarse)').matches?'ダブルタップ':'ダブルクリック'}すると書き直せます。</p>`:''}`;
+      :`<div class="empty">${S.taskFilter==='done'?'完了したタスクはまだありません。':'やることを一つ書いてみましょう。<br>ピンを押すと時計の下に表示されます。'}</div>`}</div>${list.length?`<p class="hint">${matchMedia('(pointer:coarse)').matches?'右へスワイプで完了、左へで削除。長押しでその他の操作。文字をダブルタップで書き直せます。':'文字をダブルクリックで書き直し、右クリックでその他の操作。'}</p>`:''}`;
     const inp=b.querySelector('[data-in]');
     const doAdd=()=>{if(this.add(inp.value,b._pri||0,b.querySelector('[data-due]').value)){b._due='';S.taskFilter='open';this.render(b);b.querySelector('[data-in]').focus();}else inp.focus();};
     inp.onkeydown=e=>{if(e.key==='Enter'&&!e.isComposing){e.preventDefault();doAdd();}};
     b.querySelector('[data-due]').onchange=e=>{b._due=e.target.value;};
+    b.querySelectorAll('.task').forEach(row=>swipeRow(row,{
+      right:{icon:'check',label:row.classList.contains('done')?'戻す':'完了',cls:'ok',fn:()=>{this.toggle(row.dataset.id);UIS.play('done');this.render(b);}},
+      left:{icon:'trash',label:'削除',cls:'del',fn:()=>{this.removeUndo(row.dataset.id);this.render(b);}}}));
+    if(!b._lp){b._lp=1;longPress(b,'.task',(row,x,y)=>this.menu(b,row,x,y));}
     b.ondblclick=e=>{const tx=e.target.closest('.task .tx');if(!tx||tx.querySelector('input'))return;const id=tx.closest('.task').dataset.id,t=S.tasks.find(x=>x.id===id);if(!t)return;
       tx.innerHTML=`<input maxlength="120" aria-label="タスクを編集">`;const inp=tx.querySelector('input');inp.value=t.text;inp.focus();inp.select();let done=false;
       const fin=ok=>{if(done)return;done=true;if(ok&&inp.value.trim()){t.text=inp.value.trim();this.save();}this.render(b);};
@@ -3390,6 +3447,7 @@ const Rem={
       if(at<=Date.now()){toast('過去の時刻です','未来の日時を選んでください。');return;}
       if(this.add(tx.value,at,b.querySelector('[data-r]').value))toast('リマインダーを追加しました',fmtWhen(at)+'　'+tx.value.trim());};
     tx.onkeydown=e=>{if(e.key==='Enter'&&!e.isComposing){e.preventDefault();add();}};
+    b.querySelectorAll('.it[data-id]').forEach(row=>swipeRow(row,{left:{icon:'trash',label:'削除',cls:'del',fn:()=>{UIS.play('delete');this.remove(row.dataset.id);}}}));
     b.onclick=e=>{const q=e.target.closest('[data-q]');if(q){add(Date.now()+q.dataset.q*60000);return;}
       const a=e.target.closest('[data-a]');if(!a)return;const k=a.dataset.a;
       if(k==='add')add();else if(k==='perm')askNotify();else if(k==='clr'){S.reminders=S.reminders.filter(r=>!r.done);this.save();}
@@ -3460,6 +3518,83 @@ const Memo={t:null,
   }
 };
 
+/* ================= gestures & physics ================= */
+/* A damped harmonic oscillator (mass · stiffness · damping) integrated every frame. It starts from the finger's
+   velocity, so a flick carries straight into the animation instead of restarting it. Units: px and px/s. */
+function spring({from,to,v=0,mass=1,stiffness=420,damping=38,onUpdate,onDone}){
+  if(calm()){onUpdate(to);onDone&&onDone();return{stop(){}};}
+  let x=from,vel=v,last=performance.now(),raf=0,dead=false;
+  const step=now=>{if(dead)return;const dt=Math.min(.034,Math.max(0,(now-last)/1000));last=now;
+    for(let i=0;i<4;i++){const h=dt/4,f=-stiffness*(x-to)-damping*vel;vel+=f/mass*h;x+=vel*h;}
+    if(Math.abs(vel)<8&&Math.abs(x-to)<.4){onUpdate(to);onDone&&onDone();return;}
+    onUpdate(x);raf=requestAnimationFrame(step);};
+  raf=requestAnimationFrame(step);return{stop(){dead=true;cancelAnimationFrame(raf);}};
+}
+/* iOS-style rubber band: the further you pull past the edge, the less it follows */
+const rubber=(x,d=60)=>x<=0?0:(1-1/(x*.55/d+1))*d;
+/* finger velocity from the last ~80ms of samples */
+function tracker(){const pts=[];return{add(x,y){const t=performance.now();pts.push({x,y,t});while(pts.length>2&&t-pts[0].t>80)pts.shift();},
+  v(){if(pts.length<2)return{x:0,y:0};const a=pts[0],b=pts[pts.length-1],dt=Math.max(.008,(b.t-a.t)/1000);return{x:(b.x-a.x)/dt,y:(b.y-a.y)/dt};}};}
+/* a horizontal drag that only starts once the finger clearly moves sideways, so vertical scrolling keeps working */
+function hdrag(el,{ok,start,move,end}){
+  el.addEventListener('pointerdown',e=>{if(e.button>0||(ok&&!ok(e)))return;const x0=e.clientX,y0=e.clientY,id=e.pointerId,tr=tracker();let on=false,dead=false;tr.add(x0,y0);
+    const mv=m=>{if(m.pointerId!==id||dead)return;const dx=m.clientX-x0,dy=m.clientY-y0;tr.add(m.clientX,m.clientY);
+      if(!on){if(Math.abs(dy)>10&&Math.abs(dy)>Math.abs(dx)){dead=true;return;}if(Math.abs(dx)<10)return;on=true;try{el.setPointerCapture(id);}catch(err){}start&&start(e);}
+      move(dx,dy,m);};
+    const up=u=>{if(u.pointerId!==id)return;removeEventListener('pointermove',mv);removeEventListener('pointerup',up);removeEventListener('pointercancel',up);
+      if(on){el._dragged=performance.now();end(u.clientX-x0,tr.v().x,u.type==='pointercancel');}};
+    addEventListener('pointermove',mv,{passive:true});addEventListener('pointerup',up);addEventListener('pointercancel',up);});
+  /* a drag must never also count as a tap */
+  el.addEventListener('click',e=>{if(el._dragged&&performance.now()-el._dragged<350){e.stopPropagation();e.preventDefault();}},true);
+}
+/* list row swipe (Mail/Reminders style): the action underneath is revealed and fires past the threshold or on a flick */
+function swipeRow(row,acts){let under=null;const TH=92;
+  const cur=dx=>{const a=dx>0?acts.right:acts.left;return a?dx:Math.sign(dx)*rubber(Math.abs(dx),26);};
+  hdrag(row,{ok:e=>!e.target.closest('input,textarea'),
+    start:()=>{if(row._sp)row._sp.stop();const p=row.parentElement;under=document.createElement('div');under.className='sw-under';under.style.top=row.offsetTop+'px';under.style.height=row.offsetHeight+'px';p.insertBefore(under,row);row.classList.add('swiping');},
+    move:dx=>{const a=dx>0?acts.right:acts.left;under.className=`sw-under ${dx>0?'r':'l'} ${a?a.cls:''}${a&&Math.abs(dx)>TH?' arm':''}`;under.innerHTML=a?`${ic(a.icon)}<span>${esc(a.label)}</span>`:'';row.style.transform=`translateX(${cur(dx)}px)`;},
+    end:(dx,vx,cancel)=>{const a=dx>0?acts.right:acts.left,set=x=>{row.style.transform=`translateX(${x}px)`;};
+      const go=!cancel&&a&&(Math.abs(dx)>TH||(Math.abs(vx)>650&&Math.abs(dx)>36&&Math.sign(vx)===Math.sign(dx)));
+      if(go)row._sp=spring({from:dx,to:Math.sign(dx)*(row.offsetWidth+24),v:vx,stiffness:300,damping:32,onUpdate:set,onDone:()=>{under&&under.remove();a.fn();}});
+      else row._sp=spring({from:cur(dx),to:0,v:vx,onUpdate:set,onDone:()=>{row.style.transform='';row.classList.remove('swiping');under&&under.remove();}});}});
+}
+/* long press (≈0.5s without moving) → callback; also right-click on a mouse */
+function longPress(el,sel,fn){let t=0,x=0,y=0,tgt=null;
+  el.addEventListener('pointerdown',e=>{const r=e.target.closest(sel);if(!r||e.button>0||e.target.closest('input,textarea'))return;tgt=r;x=e.clientX;y=e.clientY;clearTimeout(t);
+    t=setTimeout(()=>{tgt._lp=performance.now();fn(tgt,x,y);},480);});
+  el.addEventListener('pointermove',e=>{if(t&&Math.hypot(e.clientX-x,e.clientY-y)>8){clearTimeout(t);t=0;}},{passive:true});
+  for(const ev of ['pointerup','pointercancel'])el.addEventListener(ev,()=>{clearTimeout(t);t=0;});
+  el.addEventListener('contextmenu',e=>{const r=e.target.closest(sel);if(!r)return;e.preventDefault();fn(r,e.clientX,e.clientY);});
+  el.addEventListener('click',e=>{const r=e.target.closest(sel);if(r&&r._lp&&performance.now()-r._lp<500){e.stopPropagation();e.preventDefault();}},true);
+}
+/* context menu: a thick-material list next to the finger; tap outside or Esc to close */
+const Menu={el:null,
+  open(x,y,items,title){this.close(true);const m=document.createElement('div');m.className='menu';m.setAttribute('role','menu');if(title)m.setAttribute('aria-label',title);
+    m.innerHTML=(title?`<div class="menu-t">${esc(title)}</div>`:'')+items.map((it,i)=>`<button role="menuitem" data-i="${i}" class="${it.danger?'danger':''}">${ic(it.icon||'check')}<span>${esc(it.label)}</span></button>`).join('');
+    const bd=document.createElement('div');bd.className='menu-bd';bd.addEventListener('pointerdown',e=>{e.preventDefault();this.close();});
+    document.body.append(bd,m);this.el=m;this.bd=bd;
+    const r=m.getBoundingClientRect(),W=innerWidth,H=innerHeight;
+    m.style.left=clamp(x-r.width/2,SA.l+8,W-SA.r-r.width-8)+'px';m.style.top=clamp(y+12+r.height>H-SA.b-8?y-r.height-12:y+12,SA.t+8,H-SA.b-r.height-8)+'px';
+    m.style.transformOrigin=`${x-parseFloat(m.style.left)}px ${y<parseFloat(m.style.top)?0:r.height}px`;
+    m.addEventListener('click',e=>{const b=e.target.closest('[data-i]');if(!b)return;const it=items[+b.dataset.i];this.close();UIS.play(it.danger?'delete':'tap');it.fn();});
+    m.querySelector('button').focus({preventScroll:true});},
+  close(now){const m=this.el,bd=this.bd;if(!m)return;this.el=this.bd=null;bd.remove();if(now||calm()){m.remove();return;}m.classList.add('leaving');setTimeout(()=>m.remove(),200);},
+  get on(){return!!this.el;}
+};
+/* HUD: a brief centred confirmation (mode changed, sleep timer set …) */
+function hud(icon,text){let h=$('#hud');if(!h){h=document.createElement('div');h.id='hud';h.setAttribute('role','status');h.setAttribute('aria-live','polite');document.body.appendChild(h);}
+  h.innerHTML=`${ic(icon)}<span>${esc(text)}</span>`;h.classList.remove('show');void h.offsetWidth;h.classList.add('show');clearTimeout(h._t);h._t=setTimeout(()=>h.classList.remove('show'),1400);}
+/* quiet UI sounds as the stand-in for haptics (iOS Safari has no Vibration API); can be turned off in Settings */
+const UIS={last:0,
+  play(kind){if(!Prefs.v.sound||!AE.ctx||AE.ctx.state!=='running')return;const now=performance.now();if(now-this.last<40)return;this.last=now;
+    const ctx=AE.ctx,t=ctx.currentTime+.005,o=ctx.createOscillator(),g=ctx.createGain();
+    const P={tap:[1650,1500,.018,.025],toggle:[1180,1560,.03,.06],done:[880,1320,.05,.16],delete:[420,300,.04,.12],open:[980,1180,.02,.06]}[kind]||[1500,1500,.015,.025];
+    o.type='sine';o.frequency.setValueAtTime(P[0],t);o.frequency.exponentialRampToValueAtTime(P[1],t+P[3]);
+    g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(P[2],t+.004);g.gain.exponentialRampToValueAtTime(.0001,t+P[3]+.03);
+    o.connect(g);g.connect(AE.fx);o.start(t);o.stop(t+P[3]+.06);}
+};
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('button');if(b&&!b.disabled&&!b.closest('.menu'))UIS.play('tap');},true);
+
 /* ================= window manager ================= */
 const WINS={
   timer:{title:'タイマー',icon:'timer',w:330,side:0,render:b=>T.render(b)},
@@ -3475,10 +3610,10 @@ const WM={z:10,els:{},
   toggle(id){this.isOpen(id)?this.close(id):this.open(id);},
   open(id){
     if(mobile())Object.keys(this.els).forEach(k=>{if(k!==id)this.close(k);});
-    const e=this.els[id]||this.create(id);e.hidden=false;this.place(e,id);this.front(e);
-    WINS[id].render(e.querySelector('.win-b'));requestAnimationFrame(()=>e.classList.add('open'));UI.dock();
+    const e=this.els[id]||this.create(id);if(e._sp)e._sp.stop();e.style.transform='';e.style.transition='';e.hidden=false;this.place(e,id);this.front(e);
+    WINS[id].render(e.querySelector('.win-b'));requestAnimationFrame(()=>e.classList.add('open'));UI.dock();UIS.play('open');
   },
-  close(id){const e=this.els[id];if(!e||!this.isOpen(id))return;e.classList.remove('open');setTimeout(()=>{if(!e.classList.contains('open'))e.hidden=true;},230);UI.dock();},
+  close(id,now){const e=this.els[id];if(!e||!this.isOpen(id))return;if(now){e.classList.remove('open');e.hidden=true;e.style.transform='';e.style.transition='';UI.dock();return;}e.classList.remove('open');setTimeout(()=>{if(!e.classList.contains('open'))e.hidden=true;},230);UI.dock();},
   closeTop(){let top=null,z=-1;for(const id in this.els)if(this.isOpen(id)){const zz=+this.els[id].style.zIndex||0;if(zz>z){z=zz;top=id;}}if(top){this.close(top);return true;}return false;},
   front(e){e.style.zIndex=++this.z;},
   create(id){
@@ -3493,6 +3628,13 @@ const WM={z:10,els:{},
       const mv=m=>{e.style.left=inX(m.clientX-ox,r.width)+'px';e.style.top=inY(m.clientY-oy,52)+'px';};
       const up=()=>{h.removeEventListener('pointermove',mv);h.removeEventListener('pointerup',up);h.removeEventListener('pointercancel',up);S.winPos[id]={x:parseFloat(e.style.left),y:parseFloat(e.style.top)};store.set('winPos',S.winPos);};
       h.addEventListener('pointermove',mv);h.addEventListener('pointerup',up);h.addEventListener('pointercancel',up);});
+    /* phone landscape: the sheet follows the finger to the left and is flicked away; pulling right rubber-bands */
+    hdrag(e,{ok:ev=>compact()&&!ev.target.closest('input,textarea,select,.task,.it,.pw-in'),
+      start:()=>{if(e._sp)e._sp.stop();e.style.transition='none';},
+      move:dx=>{e.style.transform=`translateX(${dx<0?dx:rubber(dx,36)}px)`;},
+      end:(dx,vx)=>{const w=e.offsetWidth,cur=dx<0?dx:rubber(dx,36),set=x=>{e.style.transform=`translateX(${x}px)`;};
+        if(dx<-w*.33||(vx<-550&&dx<-24))e._sp=spring({from:cur,to:-w-80,v:Math.min(vx,-500),stiffness:280,damping:30,onUpdate:set,onDone:()=>this.close(id,true)});
+        else e._sp=spring({from:cur,to:0,v:vx,onUpdate:set,onDone:()=>{e.style.transform='';e.style.transition='';}});}});
     $('#windows').appendChild(e);return this.els[id]=e;
   },
   place(e,id){
@@ -3785,6 +3927,7 @@ document.addEventListener('keydown',e=>{
   if(Type.cur==='casual')return;
   if(!S.entered){if(e.key==='Enter'||e.key===' '){e.preventDefault();$('#enter').click();}return;}
   const tag=(e.target.tagName||'').toLowerCase(),typing=tag==='input'||tag==='textarea'||tag==='select'||e.target.isContentEditable;
+  if(e.key==='Escape'&&Menu.on){Menu.close();return;}
   if(e.key==='Escape'){if(shown($('#help')))help(false);else if(Breath.on)Breath.stop();else if(Focus.on)Focus.toggle(false);else if(shown($('#tracklist')))hideEl($('#tracklist'));else if(document.body.classList.contains('zen'))zen(false);else{WM.closeTop();if(typing)e.target.blur();}return;}
   if(typing||e.metaKey||e.ctrlKey||e.altKey)return;
   const k=e.key.toLowerCase();
