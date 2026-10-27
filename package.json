@@ -1,14 +1,15 @@
 {
   "name": "cell",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "private": true,
-  "description": "CELL — 集中と休息のための、八つの部屋（iPhone横向き専用PWA）",
+  "description": "CELL — 八つの部屋で、静かに過ごす（iPhone・iPad・PCのサブモニター向けPWA。App Store版の準備あり）",
   "scripts": {
     "serve": "node tests/server.mjs",
     "test": "playwright test",
     "test:chromium": "playwright test --project=chromium-*",
     "test:webkit": "playwright test --project=webkit-*",
-    "test:report": "playwright show-report"
+    "test:report": "playwright show-report",
+    "build:www": "node scripts/build-www.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.11.0",
