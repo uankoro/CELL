@@ -110,9 +110,10 @@ test('silent alerts: a timer ends with light at the edge, not a sound', async ({
   await win.locator('[data-m="custom"]').tap();
   await win.locator('[data-pre="3"]').tap();
   await win.locator('[data-a="go"]').tap();
-  // jump to just before the end, then let it run through (later jumps would also dismiss the banner)
+  // jump to just before the end, then step through it (rendering minutes of fake time frame by frame overloads WebKit)
   await page.clock.fastForward('02:50');
-  await page.clock.runFor(12000);
+  const done = page.locator('.toast', { hasText: /タイマー終了|Timer Done/ });
+  for (let i = 0; i < 6 && !(await done.count()); i++) await page.clock.fastForward('00:03');
   await expect(page.locator('#cue')).toHaveCount(1);
   await expect(page.locator('#cue')).toHaveClass(/\bon\b/);
   await expect(page.locator('.toast', { hasText: /タイマー終了|Timer Done/ })).toBeVisible();
@@ -126,9 +127,10 @@ test('with sound on, a timer end does not light the edge', async ({ page }) => {
   await win.locator('[data-m="custom"]').tap();
   await win.locator('[data-pre="3"]').tap();
   await win.locator('[data-a="go"]').tap();
-  // jump to just before the end, then let it run through (later jumps would also dismiss the banner)
+  // jump to just before the end, then step through it (rendering minutes of fake time frame by frame overloads WebKit)
   await page.clock.fastForward('02:50');
-  await page.clock.runFor(12000);
+  const done = page.locator('.toast', { hasText: /タイマー終了|Timer Done/ });
+  for (let i = 0; i < 6 && !(await done.count()); i++) await page.clock.fastForward('00:03');
   await expect(page.locator('.toast', { hasText: /タイマー終了|Timer Done/ })).toBeVisible();
   await expect(page.locator('#cue')).toHaveCount(0);
 });
@@ -139,7 +141,8 @@ test('eye breaks every 20 minutes when turned on', async ({ page }) => {
   await enter(page);
   await page.clock.fastForward('19:45');
   const eye = page.locator('.toast', { hasText: /目を休めましょう|Rest your eyes/ });
-  for (let i = 0; i < 8 && !(await eye.count()); i++) await page.clock.runFor(10000);
+  // the check runs every 30 s; each jump fires it once (the banner itself stays 20 s, so look right after each jump)
+  for (let i = 0; i < 6 && !(await eye.count()); i++) await page.clock.fastForward('00:30');
   await expect(eye).toBeVisible();
 });
 
@@ -194,4 +197,14 @@ test('the Escape key closes an open menu before it closes the sheet behind it', 
   await page.keyboard.press('Escape');
   await expect(page.locator('#morePop')).toBeHidden();
   await expect(page.locator('.win.open[data-win="timer"]')).toBeVisible();
+});
+
+test('a mouse move wakes the controls even when the browser reports no movement delta (WebKit)', async ({ page }) => {
+  await openApp(page);
+  await enter(page);
+  await rest(page);
+  await page.evaluate(() => {
+    for (const x of [300, 340]) document.body.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, pointerType: 'mouse', clientX: x, clientY: 200, movementX: 0, movementY: 0 }));
+  });
+  await expect(page.locator('body')).not.toHaveClass(/\brest\b/);
 });

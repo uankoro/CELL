@@ -4338,12 +4338,12 @@ UI={
     this.scenesEl.onclick=e=>{const b=e.target.closest('[data-s]');if(b)applyScene(b.dataset.s);};
     $('#dock').onclick=e=>{if(e.target.closest('[data-more]')){e.stopPropagation();Pops.toggle('tools');return;}const b=e.target.closest('[data-w]');if(b)tool(b.dataset.w);};
     $('#dockMore').onclick=e=>{const b=e.target.closest('[data-w]');if(!b)return;Pops.close('tools',true);tool(b.dataset.w);};
-    document.addEventListener('click',e=>{if(!e.target.closest('#status'))Pops.close('more');if(!e.target.closest('#dockMore,#dock [data-more]'))Pops.close('tools');});
+    /* iOS Safari sends no click for a tap on a plain area, so a touch anywhere outside closes the menus */
+    document.addEventListener('pointerdown',e=>{if(!e.target.closest('#status'))Pops.close('more');if(!e.target.closest('#dockMore,#dock [data-more]'))Pops.close('tools');if(!e.target.closest('#player'))hideEl($('#tracklist'));},true);
     $('#play').onclick=()=>Player.toggle();
     $('#prev').onclick=()=>Player.setTrack(S.track-1);$('#next').onclick=()=>Player.setTrack(S.track+1);
     $('#trackBtn').onclick=e=>{e.stopPropagation();Pops.closeAll();const tl=$('#tracklist');if(shown(tl))hideEl(tl);else{showEl(tl);this.tracks();}};
     $('#tracklist').onclick=e=>{const b=e.target.closest('[data-t]');if(!b)return;Player.setTrack(+b.dataset.t);if(!Player.playing)Player.play();hideEl($('#tracklist'));};
-    document.addEventListener('click',e=>{if(!e.target.closest('#player'))hideEl($('#tracklist'));});
     if(!(document.fullscreenEnabled||document.webkitFullscreenEnabled)||matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches)$('#btnFull').hidden=true;
     /* phones have no keyboard: the shortcut list is not offered there */
     if(matchMedia('(hover:none) and (pointer:coarse)').matches)$('#btnHelp').hidden=true;
@@ -4447,7 +4447,10 @@ const Chrome={on:true,t:0,hover:false,
   rest(){clearTimeout(this.t);if(this.held()){this.t=setTimeout(()=>this.rest(),1200);return;}if(this.on){this.on=false;document.body.classList.add('rest');}},
   init(){const ui=$('#ui');ui.addEventListener('pointerover',e=>{if(e.pointerType==='mouse'&&e.target.closest('#brand,#status,#bottom'))this.hover=true;});
     ui.addEventListener('pointerout',e=>{if(e.pointerType==='mouse'&&!(e.relatedTarget&&e.relatedTarget.closest&&e.relatedTarget.closest('#brand,#status,#bottom')))this.hover=false;});
-    addEventListener('pointermove',e=>{if(e.pointerType!=='mouse')return;this.hover=!!(e.target.closest&&e.target.closest('#brand,#status,#bottom'));if(e.movementX||e.movementY)this.show();},{passive:true});
+    addEventListener('pointermove',e=>{if(e.pointerType!=='mouse')return;this.hover=!!(e.target.closest&&e.target.closest('#brand,#status,#bottom'));
+      /* only a real move wakes the controls (a page that scrolls or re-lays out can send moves without one); WebKit does not
+         always fill movementX/Y, so positions are compared */
+      const moved=this.px!=null&&(Math.abs(e.clientX-this.px)>1||Math.abs(e.clientY-this.py)>1);this.px=e.clientX;this.py=e.clientY;if(moved)this.show();},{passive:true});
     addEventListener('blur',()=>{this.hover=false;});document.addEventListener('visibilitychange',()=>{this.hover=false;});
     /* browsers pick a tap's click target after the finger lifts, when the controls are already back: the click that
        follows a waking touch is swallowed, so waking never presses whatever sat under the finger */
