@@ -1156,6 +1156,7 @@ body.nightdim #life .lf-bg{opacity:.55}
 .lf-step [data-a="up"] svg{transform:rotate(90deg)}
 .lf-step .del{color:var(--danger)}
 /* a routine in progress */
+body.life #breath{z-index:44}
 #lfRun{z-index:42;background:rgba(4,5,9,.72);-webkit-backdrop-filter:blur(24px) saturate(1.4);backdrop-filter:blur(24px) saturate(1.4)}
 .rn-card{width:min(560px,calc(100vw - 48px));max-height:100%;display:flex;flex-direction:column;align-items:center;text-align:center;gap:var(--sp-3);padding:var(--sp-4);outline:none}
 .rn-top{display:flex;align-items:center;justify-content:space-between;width:100%;font-size:var(--fs-sm);color:var(--ink2)}
@@ -1190,6 +1191,9 @@ body.nightdim #life .lf-bg{opacity:.55}
   .lf-tx b{font-size:var(--fs-lg)}.lf-h{font-size:var(--fs-sm);margin-top:var(--sp-6)}.lf-wx>b{font-size:34px}.lf-adv,.lf-empty{font-size:var(--fs-md)}}
 @media (min-width:1700px) and (min-height:950px){.lf-grid,.lf-top,.lf-cards{zoom:1.22}}
 @media (min-width:2400px) and (min-height:1300px){.lf-grid,.lf-top,.lf-cards{zoom:1.6}}
+@media (pointer:coarse){.lf-sw button,.lf-link,.lf-mood button{position:relative}
+  .lf-sw button::after{content:"";position:absolute;inset:-8px 0}.lf-tabs button::after,#life .lf-wk-h .seg-tabs button::after,.lf-link::after{content:"";position:absolute;inset:-6px 0}
+  .lf-link::after{inset:-6px -6px}.lf-mood button::after{content:"";position:absolute;inset:-4px}}
 @media (prefers-reduced-motion:reduce){.lf-grid{transition:none}}
 </style>
 </head>
@@ -1262,7 +1266,7 @@ body.nightdim #life .lf-bg{opacity:.55}
 </div>
 
 <div id="help" class="overlay" hidden>
-  <div class="helpbox" role="dialog" aria-label="ショートカット一覧">
+  <div class="helpbox" role="dialog" aria-label="ショートカット一覧" tabindex="0">
     <h3>キーボードショートカット</h3>
     <div class="keys">
       <kbd>Space</kbd><span>再生／一時停止</span><kbd>N</kbd><span>次の曲</span>
@@ -3861,7 +3865,7 @@ function toast(title,body,actions,ms){
     addEventListener('pointermove',mv,{passive:true});addEventListener('pointerup',up);addEventListener('pointercancel',up);});
   $('#toasts').appendChild(el);setTimeout(kill,ms||(actions?20000:5200));return el;
 }
-function notify(title,body){try{if(!('Notification' in window)||Notification.permission!=='granted'||!document.hidden)return;const t=I18N.t(title),o={body:body&&typeof body==='object'?body.u:I18N.t(body||''),icon:'icons/icon-192.png',tag:'cell'};
+function notify(title,body,tag){try{if(!('Notification' in window)||Notification.permission!=='granted'||!document.hidden)return;const t=I18N.t(title),o={body:body&&typeof body==='object'?body.u:I18N.t(body||''),icon:'icons/icon-192.png',tag:tag||'cell'};
   if(navigator.serviceWorker&&navigator.serviceWorker.controller)navigator.serviceWorker.ready.then(r=>r.showNotification(t,o)).catch(()=>{});else new Notification(t,o);}catch(e){}}
 function askNotify(){try{if('Notification' in window&&Notification.permission==='default')Notification.requestPermission().then(()=>UI.refreshWin('reminders'));}catch(e){}}
 const addDays=(k,n)=>{const d=parseKey(k);d.setDate(d.getDate()+n);return dkey(d);};
@@ -4494,13 +4498,13 @@ const Modes={cur:store.get('mode',''),
 /* sleep: the screen fades to near black (the scene stops drawing to save battery); tap to show the controls */
 const Night={isOn:false,t:0,
   on(){const n=$('#night');this.isOn=true;Life.bed();n.hidden=false;n.classList.remove('lit');void n.offsetWidth;n.classList.add('dark');this.paint();clearInterval(this.iv);this.iv=setInterval(()=>this.paint(),1000);Wake.sync();},
-  off(now){if(!this.isOn)return;this.isOn=false;clearInterval(this.iv);AE.apply();if(Modes.cur==='sleep'){Modes.cur='';store.set('mode','');}const n=$('#night');n.classList.remove('dark','lit');if(now||calm())n.hidden=true;else setTimeout(()=>{if(!this.isOn)n.hidden=true;},400);Wake.sync();},
+  off(now){if(!this.isOn)return;this.isOn=false;Life.woke();clearInterval(this.iv);AE.apply();if(Modes.cur==='sleep'){Modes.cur='';store.set('mode','');}const n=$('#night');n.classList.remove('dark','lit');if(now||calm())n.hidden=true;else setTimeout(()=>{if(!this.isOn)n.hidden=true;},400);Wake.sync();},
   /* the scene is invisible once fully dark, so drawing it would only drain the battery */
   get blackout(){return this.isOn&&!$('#night').classList.contains('lit');},
   paint(){const n=$('#night'),d=new Date(),l=Sleep.left();setT(n.querySelector('[data-nt]'),`${pad2(d.getHours())}:${pad2(d.getMinutes())}`);
     setT(n.querySelector('[data-ns]'),l?`おやすみタイマー　あと ${T.fmt(l)}`:(Player.playing||AMB_DEFS.some(x=>AMB.level(x.id)>0)?'音が流れています':'おやすみなさい'));},
   init(){const n=$('#night');n.addEventListener('click',e=>{const a=e.target.closest('[data-na]');
-      if(a){if(a.dataset.na==='wake'){Sleep.set(0);this.off();Life.woke();Modes.cur='';store.set('mode','');}else{Sleep.set(Math.round(Sleep.left()/60000)+15);this.paint();hud('moon',`あと ${Math.round(Sleep.left()/60000)}分`);}return;}
+      if(a){if(a.dataset.na==='wake'){Sleep.set(0);this.off();Modes.cur='';store.set('mode','');}else{Sleep.set(Math.round(Sleep.left()/60000)+15);this.paint();hud('moon',`あと ${Math.round(Sleep.left()/60000)}分`);}return;}
       n.classList.add('lit');clearTimeout(this.t);this.t=setTimeout(()=>n.classList.remove('lit'),5000);});}
 };
 /* keep the screen on while focusing, and while the sleep timer is still playing sounds (a locked iPhone suspends the page, which would stop the
@@ -4647,27 +4651,41 @@ const HOME_TPL=[['シーツを洗う',7],['エアコンのフィルター掃除'
 
 const Life={tab:'today',range:7,
   cfg:null,days:null,
-  load(){const c=store.get('life',{}),arr=x=>(Array.isArray(x)?x:[]).filter(v=>v&&typeof v==='object'&&v.id);
-    this.cfg={routines:arr(c.routines),habits:arr(c.habits),chores:arr(c.chores),meds:arr(c.meds),
-      track:Object.assign({mood:true,sleep:true,water:true},c.track&&typeof c.track==='object'?c.track:{}),
-      waterGoal:clamp((c.waterGoal|0)||8,1,20),place:c.place&&typeof c.place==='object'&&isFinite(c.place.lat)?c.place:null};
-    this.days=store.get('lifeDays',{});if(!this.days||typeof this.days!=='object'||Array.isArray(this.days))this.days={};},
-  save(){store.set('life',this.cfg);this.changed();},
+  /* every record is checked on the way in: a backup pasted from elsewhere or a hand-edited value can neither break start-up nor inject markup */
+  load(){const c=store.get('life',{}),obj=v=>v&&typeof v==='object'&&!Array.isArray(v),id=v=>typeof v.id==='string'&&/^[\w-]{1,40}$/.test(v.id),
+      str=(v,n=60)=>typeof v==='string'?v.slice(0,n):'',tm=v=>typeof v==='string'&&/^\d{1,2}:\d{2}$/.test(v)?v:'',ky=v=>typeof v==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(v)?v:'',
+      ints=(v,a,b)=>(Array.isArray(v)?v:[]).map(Number).filter(x=>Number.isInteger(x)&&x>=a&&x<=b),list=(x,f)=>(Array.isArray(x)?x:[]).filter(v=>obj(v)&&id(v)).map(f);
+    this.cfg={
+      routines:list(c.routines,r=>({id:r.id,name:str(r.name,40)||'—',time:tm(r.time),days:ints(r.days,0,6),notify:r.notify!==false,
+        steps:list(r.steps,x=>({id:x.id,text:str(x.text),min:Math.max(0,Math.min(180,x.min|0)),act:ROUTINE_ACTS.some(a=>a[0]===x.act)?x.act:''}))})),
+      habits:list(c.habits,h=>({id:h.id,name:str(h.name,40)||'—',per:h.per==='week'?'week':'day',target:Math.max(1,Math.min(20,h.target|0||1))})),
+      chores:list(c.chores,x=>{const r=obj(x.rule)?x.rule:{},t=['week','nth','mday','every','year'].includes(r.t)?r.t:'week',
+          rule=t==='week'?{t,days:ints(r.days,0,6)}:t==='nth'?{t,n:ints(r.n,1,5),wd:Math.max(0,Math.min(6,r.wd|0))}:t==='mday'?{t,d:Math.max(1,Math.min(31,r.d|0||1))}
+            :t==='year'?{t,m:Math.max(1,Math.min(12,r.m|0||1)),d:Math.max(1,Math.min(31,r.d|0||1))}:{t,n:Math.max(1,Math.min(400,r.n|0||7)),from:ky(r.from)};
+        return{id:x.id,name:str(x.name,40)||'—',kind:CHORE_KINDS[x.kind]?x.kind:'other',rule,hol:!!x.hol,eve:tm(x.eve),morn:tm(x.morn),last:ky(x.last),prev:ky(x.prev),skipPrev:ky(x.skipPrev),
+          skip:(Array.isArray(x.skip)?x.skip:[]).filter(ky).slice(-60)};}),
+      meds:list(c.meds,m=>({id:m.id,name:str(m.name,30)||'—',times:(Array.isArray(m.times)?m.times:[]).map(tm).filter(Boolean).slice(0,8)})),
+      track:Object.assign({mood:true,sleep:true,water:true},obj(c.track)?c.track:{}),
+      waterGoal:clamp((c.waterGoal|0)||8,1,20),place:obj(c.place)&&isFinite(c.place.lat)&&isFinite(c.place.lon)?{name:str(c.place.name,30),lat:+c.place.lat,lon:+c.place.lon}:null};
+    const d=store.get('lifeDays',{});this.days=obj(d)?d:{};},
+  /* another window (chill on the laptop, Life on the second monitor) may have written since: start every change from what is stored */
+  fresh(){const d=store.get('lifeDays',{});if(d&&typeof d==='object'&&!Array.isArray(d))this.days=d;},
+  save(quiet){store.set('life',this.cfg);if(quiet){if(Type.cur==='life')this.dirty=true;Native.sync();}else this.changed();},
   saveDays(){const ks=Object.keys(this.days).sort();while(ks.length>800)delete this.days[ks.shift()];store.set('lifeDays',this.days);this.changed();},
   changed(){if(Type.cur==='life')this.paint();['lroutines','lhabits','lchores','lset'].forEach(k=>UI.refreshWin(k));Native.sync();},
-  day(k=dkey()){return this.days[k]||(this.days[k]={});},
-  peek(k){return this.days[k]||{};},
+  day(k=dkey()){if(!this.days[k]||typeof this.days[k]!=='object')this.days[k]={};return this.days[k];},
+  peek(k){const d=this.days[k];return d&&typeof d==='object'?d:{};},
 
   /* ---------- schedule rules ---------- */
   hm(s){const m=/^(\d{1,2}):(\d{2})$/.exec(s||'');return m?[+m[1],+m[2]]:null;},
   at(k,s){const t=this.hm(s);if(!t)return 0;const d=parseKey(k);d.setHours(t[0],t[1],0,0);return d.getTime();},
   runsOn(r,k){return !r.days||!r.days.length||r.days.includes(parseKey(k).getDay());},
   /* is this chore due on day k? (for "every N days" chores: the day it becomes due, counted from the last time it was done) */
-  due(c,k){const d=parseKey(k),r=c.rule||{};if((c.skip||[]).includes(k))return false;if(c.hol&&holidayOf(k))return false;
+  due(c,k){const d=parseKey(k),r=c.rule||{};if((c.skip||[]).includes(k))return false;if(c.hol&&r.t!=='every'&&holidayOf(k))return false;
     if(r.t==='week')return(r.days||[]).includes(d.getDay());
     if(r.t==='nth')return d.getDay()===r.wd&&(r.n||[]).includes(Math.ceil(d.getDate()/7));
     if(r.t==='mday'){const last=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();return d.getDate()===Math.min(r.d|0,last);}
-    if(r.t==='year')return d.getMonth()+1===r.m&&d.getDate()===r.d;
+    if(r.t==='year'){const last=new Date(d.getFullYear(),r.m,0).getDate();return d.getMonth()+1===r.m&&d.getDate()===Math.min(r.d|0,last);}
     if(r.t==='every'){const n=Math.max(1,r.n|0),a=c.last||r.from||k;return k===addDays(a,n)||(!c.last&&k===a);}
     return false;},
   /* an "every N days" chore stays on today's list until it is done; days past due are shown */
@@ -4693,23 +4711,25 @@ const Life={tab:'today',range:7,
   check(){if(!this.cfg)return;const now=Date.now(),last=store.get('lifeChk',0)||now-60e3;store.set('lifeChk',now);
     for(const a of this.alerts(Math.max(last,now-2*36e5),now)){const late=now-a.at>120e3;AE.chime('rem');
       const acts=a.run?[{label:'始める',fn:()=>{Type.set('life');this.run(a.run);}}]:null;
-      toast(late?lj(`見逃した${a.title}`,`Missed: ${I18N.t(a.title)}`):a.title,[late?fmtWhen(a.at)+'　':'',{u:a.body}],acts,acts?60000:12000);notify(a.title,{u:a.body});}},
+      toast(late?lj(`見逃した${a.title}`,`Missed: ${I18N.t(a.title)}`):a.title,[late?fmtWhen(a.at)+'　':'',{u:a.body}],acts,acts?60000:12000);notify(a.title,{u:a.body},'cell-'+a.id);}},
 
   /* ---------- records ---------- */
-  setMood(v){const d=this.day();d.mood=d.mood===v?0:v;if(!d.mood)delete d.mood;UIS.play('toggle');this.saveDays();},
-  water(n){const d=this.day();d.water=clamp((d.water|0)+n,0,30);UIS.play(n>0?'done':'tap');this.saveDays();},
-  med(id,t){const d=this.day(),m=d.meds||(d.meds={}),k=id+'@'+t;m[k]=!m[k];if(!m[k])delete m[k];UIS.play(m[k]?'done':'toggle');this.saveDays();},
-  habit(id){const h=this.cfg.habits.find(x=>x.id===id);if(!h)return;const d=this.day(),hs=d.habits||(d.habits={}),goal=h.per==='day'?Math.max(1,h.target|0):1;
+  setMood(v){this.fresh();const d=this.day();d.mood=d.mood===v?0:v;if(!d.mood)delete d.mood;UIS.play('toggle');this.saveDays();},
+  water(n){this.fresh();const d=this.day();d.water=clamp((d.water|0)+n,0,30);UIS.play(n>0?'done':'tap');this.saveDays();},
+  med(id,t){this.fresh();const d=this.day(),m=d.meds||(d.meds={}),k=id+'@'+t;m[k]=!m[k];if(!m[k])delete m[k];UIS.play(m[k]?'done':'toggle');this.saveDays();},
+  habit(id){this.fresh();const h=this.cfg.habits.find(x=>x.id===id);if(!h)return;const d=this.day(),hs=d.habits||(d.habits={}),goal=h.per==='day'?Math.max(1,h.target|0):1;
     hs[id]=(hs[id]|0)>=goal?0:(hs[id]|0)+1;if(!hs[id])delete hs[id];UIS.play(hs[id]>=goal?'done':'toggle');this.saveDays();},
-  chore(id,k=dkey()){const c=this.cfg.chores.find(x=>x.id===id);if(!c)return;const d=this.day(k),cs=d.chores||(d.chores={});cs[id]=!cs[id];
+  chore(id,k=dkey()){this.fresh();const c=this.cfg.chores.find(x=>x.id===id);if(!c)return;const d=this.day(k),cs=d.chores||(d.chores={});cs[id]=!cs[id];
     if(cs[id]){if(c.rule&&c.rule.t==='every'){c.prev=c.last||'';c.last=k;}UIS.play('done');}else{delete cs[id];if(c.rule&&c.rule.t==='every'&&c.last===k)c.last=c.prev||'';}
     store.set('life',this.cfg);this.saveDays();},
-  skip(id,k){const c=this.cfg.chores.find(x=>x.id===id);if(!c)return;c.skip=(c.skip||[]).filter(x=>x>=addDays(dkey(),-60));c.skip.includes(k)?c.skip=c.skip.filter(x=>x!==k):c.skip.push(k);this.save();},
-  note(v){const d=this.day();v=String(v).slice(0,200);if(v)d.note=v;else delete d.note;store.set('lifeDays',this.days);},
+  skip(id,k){const c=this.cfg.chores.find(x=>x.id===id);if(!c)return;c.skip=(c.skip||[]).filter(x=>x>=addDays(dkey(),-60));const ev=c.rule&&c.rule.t==='every';
+    /* "not this time" on an every-N-days chore starts the count again from that day */
+    if(c.skip.includes(k)){c.skip=c.skip.filter(x=>x!==k);if(ev){c.last=c.skipPrev||c.last;c.skipPrev='';}}else{c.skip.push(k);if(ev){c.skipPrev=c.last||'';c.last=k;}}this.save();},
+  note(v){this.fresh();const d=this.day();v=String(v).slice(0,200);if(v)d.note=v;else delete d.note;store.set('lifeDays',this.days);},
   /* sleep mode on the chill side doubles as the sleep record: lights out → bedtime, "起きる" → wake-up */
   bed(){store.set('lifeBed',Date.now());},
-  woke(){const b=store.get('lifeBed',0),now=Date.now();store.set('lifeBed',0);if(!b||!this.cfg)return;const h=(now-b)/36e5;if(h<1||h>16)return;
-    this.day().sleep={bed:b,wake:now};this.saveDays();},
+  woke(){this.fresh();const b=store.get('lifeBed',0),now=Date.now();store.set('lifeBed',0);if(!b||!this.cfg)return;const h=(now-b)/36e5;if(h<1||h>16)return;
+    const d=this.day(),o=d.sleep;if(o&&o.wake-o.bed>now-b)return;d.sleep={bed:b,wake:now};this.saveDays();},
   sleepOf(k){const s=this.peek(k).sleep;return s&&s.wake>s.bed?(s.wake-s.bed)/36e5:0;},
   hrs(h){const m=Math.round(h*60);return lj(`${Math.floor(m/60)}時間${pad2(m%60)}分`,`${Math.floor(m/60)}h ${pad2(m%60)}m`);},
 
@@ -4747,17 +4767,25 @@ const Life={tab:'today',range:7,
         {icon:'bin',label:'くらしの予定（ゴミの日・家事・支払い）',fn:()=>WM.open('lchores')},{icon:'bell',label:'リマインダー',fn:()=>WM.open('reminders')},{icon:'tasks',label:'タスク',fn:()=>WM.open('tasks')}]);
       else if(k==='set')WM.open('lset');};
     el.addEventListener('click',e=>this.click(e));
-    el.addEventListener('contextmenu',e=>{const row=e.target.closest('[data-ch]');if(row){e.preventDefault();this.choreMenu(row,e.clientX,e.clientY);}});
+    /* alerts ring with a chime: the first touch or key in Life starts the audio engine (browsers allow it only after a gesture) */
+    ['pointerdown','keydown'].forEach(t=>document.addEventListener(t,()=>{if(Type.cur==='life')AE.init();},true));
+    el.addEventListener('contextmenu',e=>{const row=e.target.closest('[data-ch]');if(row){e.preventDefault();if(!Menu.on)this.choreMenu(row,e.clientX,e.clientY);}});
     /* long press on a chore: "not this time" (collection holidays, a skipped payment) */
     let lp=0;el.addEventListener('pointerdown',e=>{const row=e.target.closest('[data-ch]');if(!row||e.pointerType==='mouse')return;clearTimeout(lp);const x=e.clientX,y=e.clientY;
-      lp=setTimeout(()=>{row._lp=1;Native.haptic('toggle');this.choreMenu(row,x,y);},520);});
+      lp=setTimeout(()=>{row._lp=1;setTimeout(()=>{row._lp=0;},800);Native.haptic('toggle');if(!Menu.on)this.choreMenu(row,x,y);},520);});
     ['pointerup','pointercancel','pointermove'].forEach(t=>el.addEventListener(t,e=>{if(t!=='pointermove'||Math.abs(e.movementX)+Math.abs(e.movementY)>6)clearTimeout(lp);},{passive:true}));
     const note=el.querySelector('[data-note]');note.oninput=()=>{clearTimeout(this.nt);this.nt=setTimeout(()=>this.note(note.value),400);};
     note.onblur=()=>{clearTimeout(this.nt);this.note(note.value);};
     note.onkeydown=e=>{if(e.key==='Enter'&&!e.isComposing&&e.keyCode!==229){e.preventDefault();note.blur();}};
     setInterval(()=>this.check(),15e3);setTimeout(()=>this.check(),1500);
-    setInterval(()=>{if(Type.cur==='life'&&!document.hidden){this.clock();if(new Date().getSeconds()<2||this.dirty)this.paint();}},1000);
-    document.addEventListener('visibilitychange',()=>{if(!document.hidden&&Type.cur==='life'){this.paint();this.weather();}});},
+    setInterval(()=>{if(Type.cur!=='life'||document.hidden)return;this.clock();
+      /* tasks and reminders can change from a sheet or another window */
+      const sig=S.tasks.map(t=>t.id+(t.done?1:0)+t.due).join()+'|'+S.reminders.map(r=>r.id+r.at+(r.done?1:0)).join();if(sig!==this.sig){this.sig=sig;this.dirty=true;}
+      if(new Date().getSeconds()<2||this.dirty)this.paint();if(new Date().getSeconds()===30)this.weather();},1000);
+    document.addEventListener('visibilitychange',()=>{if(document.hidden)return;
+      /* in the App Store build iOS has already delivered what came due in the background: do not ring it again */
+      if(Native.plugin('LocalNotifications'))store.set('lifeChk',Date.now());
+      if(Type.cur==='life'){this.paint();this.weather();}});},
   show(on){const el=this.el;clearTimeout(this.ft);
     if(on){this.bg();this.paint();this.weather();el.classList.add('fading');el.hidden=false;void el.offsetWidth;el.classList.remove('fading');document.body.classList.add('life');}
     else{document.body.classList.remove('life');if(el.hidden)return;el.classList.add('fading');this.ft=setTimeout(()=>{el.hidden=true;el.classList.remove('fading');},calm()?0:360);}},
@@ -4771,15 +4799,19 @@ const Life={tab:'today',range:7,
     el.querySelectorAll('.lf-tabs [data-tab]').forEach(b=>b.classList.toggle('on',b.dataset.tab===this.tab));segs(el.querySelector('.lf-top'),'life');
     el.querySelector('[data-view="today"]').hidden=this.tab!=='today';el.querySelector('[data-view="week"]').hidden=this.tab!=='week';
     this.top();this.clock();
+    /* a re-render must not throw keyboard focus back to the page: find the same control again afterwards */
+    const ae=document.activeElement,keyOf=n=>['data-a','data-id','data-v','data-t','data-ch','data-go','data-r'].map(a=>n.getAttribute(a)).join('|'),
+      had=ae&&ae!==document.body&&el.contains(ae)&&!ae.matches('[data-note]')?keyOf(ae.closest('[data-a],[data-go],[data-r],[data-ch]')||ae):null;
     if(this.tab==='today'){setH(el.querySelector('[data-col="a"]'),this.colA());setH(el.querySelector('[data-col="b"]'),this.colB());setH(el.querySelector('[data-col="c"]'),this.colC());
       const note=el.querySelector('[data-note]');if(document.activeElement!==note)note.value=this.peek(dkey()).note||'';
-      setH(el.querySelector('[data-ago]'),this.ago());}
-    else setH(el.querySelector('[data-view="week"]'),this.week());
+      setH(el.querySelector('[data-ago]'),this.ago());this.clock();}
+    else{setH(el.querySelector('[data-view="week"]'),this.week());segs(el.querySelector('[data-view="week"] .lf-wk-h'),'lw');}
+    if(had&&!el.contains(document.activeElement)){const t=[...el.querySelectorAll('[data-a],[data-go],[data-r],[data-ch]')].find(n=>keyOf(n)===had&&n.offsetParent);if(t)t.focus({preventScroll:true});}
     UI.title();},
 
   /* column A: the time, the sky and the household */
   colA(){const n=new Date(),k=dkey(n),hol=holidayOf(k);
-    let h=`<div class="lf-now"><b class="lf-time" data-lt data-noi18n>${n.getHours()}:${pad2(n.getMinutes())}</b>
+    let h=`<div class="lf-now"><b class="lf-time" data-lt data-noi18n></b>
       <span class="lf-date">${n.getMonth()+1}月${n.getDate()}日（${WD[n.getDay()]}）${hol?`<em>${esc(hol)}</em>`:''}</span></div>`;
     h+=this.sky();
     const tk=dkey(),tm=addDays(tk,1),today=this.choresOn(tk),tom=this.choresOn(tm).filter(c=>!today.includes(c));
@@ -4787,14 +4819,14 @@ const Life={tab:'today',range:7,
     if(!today.length&&!tom.length)h+=`<p class="lf-empty">${this.cfg.chores.length?'今日と明日は、くらしの予定がありません。':'ゴミの日や、ときどきの家事・支払いを登録すると、前の晩と当日の朝にお知らせします。'}</p>`;
     const done=this.peek(tk).chores||{};
     for(const c of today){const od=this.overdue(c,tk),on=!!done[c.id];
-      h+=`<div class="lf-row lf-ch${on?' done':''}" data-ch="${c.id}" data-k="${tk}"><button class="lf-ck${on?' on':''}" data-a="chore" aria-pressed="${on}" aria-label="${esc(c.name)}" data-noi18n>${ic('check')}</button>
-        <span class="lf-tx"><b data-u>${esc(c.name)}</b><small>${od?lj(`${od}日過ぎています`,`${od} days overdue`):'今日'}${c.morn&&c.kind==='gomi'?lj(`　${c.morn}まで`,` · by ${c.morn}`):''}</small></span></div>`;}
-    for(const c of tom)h+=`<div class="lf-row lf-ch soon" data-ch="${c.id}" data-k="${tm}"><span class="lf-dot" aria-hidden="true"></span><span class="lf-tx"><b data-u>${esc(c.name)}</b><small>明日</small></span></div>`;
+      h+=`<div class="lf-row lf-ch${on?' done':''}" data-ch="${esc(c.id)}" data-k="${tk}"><button class="lf-ck${on?' on':''}" data-a="chore" aria-pressed="${on}" aria-label="${esc(c.name)}" data-noi18n>${ic('check')}</button>
+        <span class="lf-tx"><b data-u>${esc(c.name)}</b><small>${od?lj(`${od}日過ぎています`,`${od} days overdue`):'今日'}${c.morn&&c.kind==='gomi'?lj(`　${esc(c.morn)}まで`,` · by ${esc(c.morn)}`):''}</small></span></div>`;}
+    for(const c of tom)h+=`<div class="lf-row lf-ch soon" data-ch="${esc(c.id)}" data-k="${tm}"><span class="lf-dot" aria-hidden="true"></span><span class="lf-tx"><b data-u>${esc(c.name)}</b><small>明日</small></span></div>`;
     return h;},
   sky(){const p=this.cfg.place,w=this.wx;
     if(!p)return`<button class="lf-sky lf-sky-set" data-go="lset">${ic('psun')}<span><b>天気を表示する</b><small>傘・洗濯・暑さのひとことも</small></span></button>`;
     if(!w||w.lat!==p.lat||w.lon!==p.lon)return`<div class="lf-sky"><span class="lf-ph" data-u>${esc(p.name)}</span><small>${navigator.onLine===false?'オフラインです':'天気を読み込んでいます…'}</small></div>`;
-    const d=w.daily,tk=dkey(),i=Math.max(0,(d.time||[]).indexOf(tk));if(!d.time||d.time[i]!==tk&&d.time[0]!==tk)return`<div class="lf-sky"><span class="lf-ph" data-u>${esc(p.name)}</span><small>天気を読み込んでいます…</small></div>`;
+    const d=w.daily,tk=dkey(),i=Math.max(0,(d.time||[]).indexOf(tk));if(!d.time||d.time[i]!==tk&&d.time[0]!==tk)return`<div class="lf-sky"><span class="lf-ph" data-u>${esc(p.name)}</span><small>${navigator.onLine===false||w.err?'オフラインです':'天気を読み込んでいます…'}</small></div>`;
     const [icn,word]=this.wxk(w.cur.weather_code!=null?w.cur.weather_code:d.weather_code[i]),adv=this.advice(d,i),now=Date.now();
     const hrs=[];for(let j=0;j<(w.hourly.time||[]).length&&hrs.length<4;j++){const t=new Date(w.hourly.time[j]).getTime();if(t<now)continue;if(new Date(t).getHours()%3)continue;hrs.push(j);}
     const stale=now-w.at>3*36e5;
@@ -4809,18 +4841,18 @@ const Life={tab:'today',range:7,
     for(const r of c.routines)if(this.runsOn(r,k))out.push({kind:'routine',at:r.time?this.at(k,r.time):0,id:r.id,text:r.name,done:!!(d.routines||{})[r.id],sub:lj(`${r.steps.length}ステップ`,`${r.steps.length} step${r.steps.length===1?'':'s'}`)});
     for(const r of S.reminders){const t=r.repeat==='daily'?this.at(k,`${new Date(r.at).getHours()}:${pad2(new Date(r.at).getMinutes())}`):r.at;if(dkey(new Date(t))!==k)continue;
       out.push({kind:'rem',at:t,id:r.id,text:r.text,done:r.repeat==='daily'?t<=now:r.done});}
-    for(const a of casualAlarms()){if(!a.on||!a.time)continue;if(a.days&&a.days.length&&!a.days.includes(parseKey(k).getDay()))continue;const t=this.at(k,a.time);out.push({kind:'alarm',at:t,id:a.id||a.time,text:a.label||'アラーム',done:t<=now});}
+    for(const a of casualAlarms()){if(!a.on||!a.time)continue;if(a.days&&a.days.length&&!a.days.includes(parseKey(k).getDay()))continue;const t=this.at(k,a.time);out.push({kind:'alarm',at:t,id:a.id||a.time,text:a.label||I18N.t('アラーム'),done:t<=now});}
     for(const m of c.meds)for(const t of m.times||[])out.push({kind:'med',at:this.at(k,t),id:m.id,t,text:m.name,done:!!(d.meds||{})[m.id+'@'+t]});
     for(const t of S.tasks)if(t.due&&t.due<=k&&(!t.done||(t.doneAt&&dkey(new Date(t.doneAt))===k)))out.push({kind:'task',at:0,id:t.id,text:t.text,done:t.done,sub:t.due<k?'期限を過ぎています':''});
     return out.sort((a,b)=>(a.at||Infinity)-(b.at||Infinity));},
   colB(){const its=this.items(),now=Date.now(),timed=its.filter(x=>x.at),loose=its.filter(x=>!x.at);
     const ico={routine:'route',rem:'bell',alarm:'clock',med:'pill',task:'tasks'};
     const row=x=>{const t=x.at?new Date(x.at):null,past=x.at&&x.at<now-15*60e3;
-      const act=x.kind==='routine'?(x.done?`<span class="lf-ok">${ic('check')}</span>`:`<button class="lf-go" data-a="run" data-id="${x.id}" aria-label="${esc(lj(x.text+'を始める','Start '+x.text))}" data-noi18n>${ic('play')}</button>`)
-        :x.kind==='med'?`<button class="lf-ck${x.done?' on':''}" data-a="med" data-id="${x.id}" data-t="${x.t}" aria-pressed="${x.done}" aria-label="${esc(x.text)}" data-noi18n>${ic('check')}</button>`
-        :x.kind==='task'?`<button class="lf-ck${x.done?' on':''}" data-a="task" data-id="${x.id}" aria-pressed="${x.done}" aria-label="${esc(x.text)}" data-noi18n>${ic('check')}</button>`
+      const act=x.kind==='routine'?(x.done?`<span class="lf-ok">${ic('check')}</span>`:`<button class="lf-go" data-a="run" data-id="${esc(x.id)}" aria-label="${esc(lj(x.text+'を始める','Start '+x.text))}" data-noi18n>${ic('play')}</button>`)
+        :x.kind==='med'?`<button class="lf-ck${x.done?' on':''}" data-a="med" data-id="${esc(x.id)}" data-t="${esc(x.t)}" aria-pressed="${x.done}" aria-label="${esc(x.text)}" data-noi18n>${ic('check')}</button>`
+        :x.kind==='task'?`<button class="lf-ck${x.done?' on':''}" data-a="task" data-id="${esc(x.id)}" aria-pressed="${x.done}" aria-label="${esc(x.text)}" data-noi18n>${ic('check')}</button>`
         :x.done?`<span class="lf-ok">${ic('check')}</span>`:'';
-      return`<div class="lf-row lf-it${x.done?' done':''}${past&&!x.done?' past':''}" data-kind="${x.kind}" data-id="${x.id}">
+      return`<div class="lf-row lf-it${x.done?' done':''}${past&&!x.done?' past':''}" data-kind="${x.kind}" data-id="${esc(x.id)}">
         <time>${t?`${t.getHours()}:${pad2(t.getMinutes())}`:''}</time>${ic(ico[x.kind])}<span class="lf-tx"><b data-u>${esc(x.text)}</b>${x.sub?`<small>${x.sub}</small>`:''}</span>${act}</div>`;};
     let h=`<div class="lf-h"><span>今日の流れ</span><button class="lf-link" data-go="lroutines">ルーティン</button></div>`;
     if(!its.length)h+=`<div class="lf-start"><p>朝と夜の流れを決めておくと、一つずつ順番に進められます。</p>
@@ -4843,7 +4875,7 @@ const Life={tab:'today',range:7,
     const wk=this.weekKeys(k);
     for(const x of c.habits){const goal=x.per==='day'?Math.max(1,x.target|0):1,cnt=((d.habits||{})[x.id]|0),full=cnt>=goal,
         wdone=wk.filter(q=>((this.peek(q).habits||{})[x.id]|0)>=goal).length,p=x.per==='week'?Math.min(1,wdone/Math.max(1,x.target|0)):Math.min(1,cnt/goal);
-      h+=`<button class="lf-row lf-hab${full?' done':''}" data-a="habit" data-id="${x.id}" aria-pressed="${full}">${this.ring(p,full)}<span class="lf-tx"><b data-u>${esc(x.name)}</b>
+      h+=`<button class="lf-row lf-hab${full?' done':''}" data-a="habit" data-id="${esc(x.id)}" aria-pressed="${full}">${this.ring(p,full)}<span class="lf-tx"><b data-u>${esc(x.name)}</b>
         <small>${x.per==='week'?lj(`今週 ${wdone}/${x.target}回`,`This week ${wdone}/${x.target}`):goal>1?lj(`今日 ${cnt}/${goal}`,`Today ${cnt}/${goal}`):full?'今日はできました':'今日'}</small></span></button>`;}
     return h;},
   weekKeys(k){const d=parseKey(k),mon=(d.getDay()+6)%7;return Array.from({length:7},(_,i)=>addDays(k,i-mon)).filter(x=>x<=k);},
@@ -4911,9 +4943,10 @@ const Life={tab:'today',range:7,
 
 /* ---------- a routine, one step at a time (like Routinery / Structured): the step, its minutes counting down, and what comes next ---------- */
 const Run={on:false,r:null,i:0,t0:0,st:0,
-  open(r){this.r=r;this.i=0;this.t0=Date.now();this.on=true;const o=$('#lfRun');showEl(o);this.step();clearInterval(this.iv);this.iv=setInterval(()=>this.tick(),250);
+  open(r){this.from=document.activeElement;this.r=r;this.i=0;this.t0=Date.now();this.on=true;const o=$('#lfRun');showEl(o);this.step();clearInterval(this.iv);this.iv=setInterval(()=>this.tick(),250);
     o.querySelector('.rn-card').focus({preventScroll:true});AE.init();},
-  close(){this.on=false;clearInterval(this.iv);hideEl($('#lfRun'));Life.paint();},
+  close(){this.on=false;clearInterval(this.iv);hideEl($('#lfRun'));Life.paint();const f=this.from;this.from=null;
+    const back=f&&f.isConnected?f:f&&f.dataset&&f.dataset.id?$(`#life [data-a="run"][data-id="${CSS.escape(f.dataset.id)}"]`):null;(back||$('#life .lf-sw [aria-pressed="true"]')).focus({preventScroll:true});},
   step(){const s=this.r.steps[this.i],o=$('#lfRun');if(!s){this.done();return;}this.st=Date.now();this.left=(s.min|0)*60000;this.paused=false;this.rang=false;
     setT(o.querySelector('[data-rn]'),this.r.name);setT(o.querySelector('[data-rc]'),`${this.i+1} / ${this.r.steps.length}`);
     o.querySelector('[data-rt]').textContent=s.text;o.querySelector('[data-rt]').setAttribute('data-u','');
@@ -4936,7 +4969,10 @@ const Run={on:false,r:null,i:0,t0:0,st:0,
   /* leaving for focus or sleep counts as finishing the routine */
   finish(silent){const r=this.r,ms=Date.now()-this.t0;this.close();if(silent){const d=Life.day(),rs=d.routines||(d.routines={});rs[r.id]=Date.now();Life.saveDays();}else Life.ranRoutine(r,ms);},
   done(){this.finish(false);},
-  init(){const o=$('#lfRun');o.addEventListener('click',e=>{const b=e.target.closest('[data-ra]');if(!b)return;const k=b.dataset.ra;
+  init(){const o=$('#lfRun');
+    o.addEventListener('keydown',e=>{if(e.key!=='Tab')return;const f=[...o.querySelectorAll('button:not([hidden])')];if(!f.length)return;const i=f.indexOf(document.activeElement);
+      if(e.shiftKey&&i<=0){e.preventDefault();f[f.length-1].focus();}else if(!e.shiftKey&&i===f.length-1){e.preventDefault();f[0].focus();}});
+    o.addEventListener('click',e=>{const b=e.target.closest('[data-ra]');if(!b)return;const k=b.dataset.ra;
     if(k==='next')this.next();else if(k==='back')this.back();else if(k==='skip'){this.i++;this.step();}else if(k==='act')this.act();else if(k==='close')this.close();});}
 };
 
@@ -4974,22 +5010,26 @@ const LifeSheets={
     b.onchange=e=>{if(!ed)return;const f=e.target.dataset.f,s=e.target.dataset.s;
       if(f==='name')ed.name=e.target.value.trim()||ed.name;else if(f==='time')ed.time=e.target.value;else if(f==='notify')ed.notify=e.target.checked;
       else if(s){const st=ed.steps[+e.target.closest('[data-i]').dataset.i];if(s==='text')st.text=e.target.value.trim();else if(s==='min')st.min=+e.target.value;else st.act=e.target.value;}
-      else return;ed.steps=ed.steps.filter((x,i,a)=>x.text||i===a.length-1);L.save();};},
+      else return;
+      /* the sheet is not rebuilt for an edit: a time typed digit by digit, or the click that follows, stays where it is */
+      L.save(true);};
+    b.addEventListener('focusout',e=>{if(!ed||e.target.dataset.s!=='text')return;const n=ed.steps.length;ed.steps=ed.steps.filter((x,i,a)=>x.text||i===a.length-1);
+      if(ed.steps.length!==n)setTimeout(()=>L.save(),0);});},
   habits(b){const L=Life,hs=L.cfg.habits;
     b.innerHTML=`<input class="in" data-n placeholder="続けたいこと（例：ストレッチ）" maxlength="40" style="width:100%" aria-label="習慣の名前">
-      <div class="row" style="margin-top:6px"><div class="seg-tabs" data-per style="flex:1"><button data-v="day" class="on">毎日</button><button data-v="week">週に何回</button></div>
-      <select class="in" data-t aria-label="回数" style="width:96px">${[1,2,3,4,5,6,7,8].map(n=>`<option value="${n}">${n}回</option>`).join('')}</select><button class="btn pri" data-a="add">${ic('plus')}追加</button></div>
+      <div class="seg-tabs" data-per style="margin-top:6px"><button data-v="day" class="on">毎日</button><button data-v="week">週に何回</button></div>
+      <div class="row" style="margin-top:6px"><select class="in" data-t aria-label="回数" style="flex:1;min-width:0">${[1,2,3,4,5,6,7,8].map(n=>`<option value="${n}">${n}回</option>`).join('')}</select><button class="btn pri" data-a="add">${ic('plus')}追加</button></div>
       <div class="chips" style="margin-top:8px">${['ストレッチ','散歩','読書','日記','早寝','野菜を食べる'].filter(x=>!hs.some(h=>h.name===x)).map(x=>`<button class="chip" data-q="${x}">${x}</button>`).join('')}</div>
       <div class="lbl" style="margin-top:12px">いまの習慣</div>
       ${hs.length?hs.map(h=>`<div class="it" data-id="${h.id}">${ic('ring')}<span class="tx" data-u>${esc(h.name)}</span><span class="tag">${h.per==='week'?lj(`週${h.target}回`,`${h.target}× a week`):(h.target|0)>1?lj(`1日${h.target}回`,`${h.target}× a day`):'毎日'}</span><button class="del" data-a="del" aria-label="削除">${ic('trash')}</button></div>`).join(''):'<div class="empty">まだ習慣はありません。</div>'}
       <p class="hint">連続日数は数えません。週に何回の習慣は、その週のうちにできれば十分です。</p>`;
     segs(b,'lh');let per='day';
-    const add=name=>{name=I18N.t((name||'').trim());if(!name){b.querySelector('[data-n]').focus();return;}hs.push({id:uid(),name,per,target:+b.querySelector('[data-t]').value||1});L.save();UIS.play('done');};
+    const add=(name,chip)=>{name=(name||'').trim();if(chip)name=I18N.t(name);if(!name){b.querySelector('[data-n]').focus();return;}hs.push({id:uid(),name,per,target:+b.querySelector('[data-t]').value||1});L.save();UIS.play('done');};
     b.querySelector('[data-n]').onkeydown=e=>{if(e.key==='Enter'&&!e.isComposing&&e.keyCode!==229){e.preventDefault();add(e.target.value);}};
     b.querySelectorAll('.it[data-id]').forEach(row=>swipeRow(row,{left:{icon:'trash',label:'削除',cls:'del',fn:()=>del(row.dataset.id)}}));
     const del=id=>{const i=hs.findIndex(h=>h.id===id);if(i<0)return;const h=hs[i];hs.splice(i,1);L.save();UIS.play('delete');toast('習慣を削除しました',{u:h.name},[{label:'取り消す',fn:()=>{hs.splice(i,0,h);L.save();}}],6000);};
     b.onclick=e=>{const pv=e.target.closest('[data-per] [data-v]');if(pv){per=pv.dataset.v;b.querySelectorAll('[data-per] button').forEach(x=>x.classList.toggle('on',x===pv));segs(b,'lh');return;}
-      const q=e.target.closest('[data-q]');if(q){add(q.dataset.q);return;}const a=e.target.closest('[data-a]');if(!a)return;
+      const q=e.target.closest('[data-q]');if(q){add(q.dataset.q,true);return;}const a=e.target.closest('[data-a]');if(!a)return;
       if(a.dataset.a==='add')add(b.querySelector('[data-n]').value);else if(a.dataset.a==='del')del(a.closest('[data-id]').dataset.id);};},
   chores(b){const L=Life,cs=L.cfg.chores,ed=cs.find(c=>c.id===L.editC);
     if(ed){const r=ed.rule||(ed.rule={t:'week',days:[]});
@@ -5001,13 +5041,13 @@ const LifeSheets={
       <div class="lf-rule">${r.t==='week'?this.days(r.days||[]):r.t==='nth'?`<div class="lf-wds" role="group" aria-label="第何週">${[1,2,3,4,5].map(n=>`<button type="button" data-nth="${n}" class="${(r.n||[]).includes(n)?'on':''}" aria-pressed="${(r.n||[]).includes(n)}">${lj('第'+n,ord(n))}</button>`).join('')}</div>
           <div class="lf-wds" role="radiogroup" aria-label="曜日" style="margin-top:6px">${[1,2,3,4,5,6,0].map(i=>`<button type="button" data-nwd="${i}" class="${r.wd===i?'on':''}" aria-pressed="${r.wd===i}">${WD[i]}</button>`).join('')}</div>`
         :r.t==='mday'?`<label class="lbl">${lj('毎月','Day')}<select class="in" data-f="md" style="margin:0 6px">${Array.from({length:31},(_,i)=>`<option ${r.d===i+1?'selected':''} value="${i+1}">${i+1}</option>`).join('')}</select>${lj('日（月末より後は月末）','of each month (or its last day)')}</label>`
-        :r.t==='year'?`<label class="lbl"><input class="in" type="date" data-f="yd" value="${new Date().getFullYear()}-${pad2(r.m||1)}-${pad2(r.d||1)}"></label>`
+        :r.t==='year'?`<label class="lbl"><input class="in" type="date" data-f="yd" value="${(()=>{const y=new Date().getFullYear(),m=r.m||1;return`${y}-${pad2(m)}-${pad2(Math.min(r.d||1,new Date(y,m,0).getDate()))}`;})()}"></label>`
         :`<label class="lbl"><select class="in" data-f="ev" style="margin-right:6px">${[2,3,5,7,10,14,21,30,60,90,180].map(n=>`<option ${r.n===n?'selected':''} value="${n}">${n}</option>`).join('')}</select>${lj('日ごと　最後に済ませた日','days · last done')}<input class="in" type="date" data-f="last" value="${ed.last||r.from||dkey()}" style="margin-left:6px"></label>`}</div>
       ${r.t!=='every'?`<label class="chk" style="margin-top:8px">祝日はお休み<input type="checkbox" data-f="hol" ${ed.hol?'checked':''}></label>`:''}
       <div class="lbl" style="margin-top:12px">お知らせ</div>
       <div class="row"><label class="chk" style="flex:1">${r.t==='every'?'当日の朝':'前の晩'}<input type="checkbox" data-f="${r.t==='every'?'mon':'eon'}" ${(r.t==='every'?ed.morn:ed.eve)?'checked':''}></label><input class="in" type="time" data-f="${r.t==='every'?'morn':'eve'}" value="${(r.t==='every'?ed.morn:ed.eve)||(r.t==='every'?'07:30':'20:00')}" aria-label="時刻" style="width:120px"></div>
       ${r.t!=='every'?`<div class="row"><label class="chk" style="flex:1">当日の朝<input type="checkbox" data-f="mon" ${ed.morn?'checked':''}></label><input class="in" type="time" data-f="morn" value="${ed.morn||'07:00'}" aria-label="時刻" style="width:120px"></div>`:''}
-      <p class="hint">${L.nextText(ed)||'—'}</p>
+      <p class="hint" data-next>${L.nextText(ed)||'—'}</p>
       <div class="row"><button class="btn ghost" data-a="cdel" style="margin-left:auto;color:var(--danger)">削除</button></div>`;}
     else{b.innerHTML=`${cs.length?cs.map(c=>`<button class="cell-b lf-li" data-a="edit" data-id="${c.id}">${ic(CHORE_KINDS[c.kind]?CHORE_KINDS[c.kind][1]:'calendar')}<span><b data-u>${esc(c.name)}</b><small>${L.ruleText(c)}${L.next(c)?lj('　',' · ')+L.nextText(c):''}</small></span>${ic('chevR')}</button>`).join(''):'<p class="empty">まだ登録はありません。</p>'}
       <div class="lbl" style="margin-top:12px">ゴミの日</div><div class="chips">${GOMI_TPL.map(n=>`<button class="chip" data-a="gomi" data-n="${n}">${ic('plus')}${n}</button>`).join('')}</div>
@@ -5033,7 +5073,7 @@ const LifeSheets={
     b.onchange=e=>{if(!ed)return;const f=e.target.dataset.f,v=e.target.value,r=ed.rule;
       if(f==='name')ed.name=v.trim()||ed.name;
       else if(f==='rt'){const dw=new Date().getDay(),d=new Date();ed.rule=v==='week'?{t:'week',days:[dw]}:v==='nth'?{t:'nth',n:[2,4],wd:dw}:v==='mday'?{t:'mday',d:d.getDate()}:v==='year'?{t:'year',m:d.getMonth()+1,d:d.getDate()}:{t:'every',n:7,from:dkey()};
-        if(v==='every'){ed.last=ed.last||dkey();ed.eve='';ed.morn=ed.morn||'07:30';}}
+        if(v==='every'){ed.last=ed.last||dkey();ed.eve='';ed.morn=ed.morn||'07:30';ed.hol=false;}}
       else if(f==='md')r.d=+v;else if(f==='ev')r.n=+v;else if(f==='last'){if(v){ed.last=v;r.from=v;}}
       else if(f==='yd'){if(v){const [,m,d]=v.split('-').map(Number);r.m=m;r.d=d;}}
       else if(f==='hol')ed.hol=e.target.checked;
@@ -5041,7 +5081,9 @@ const LifeSheets={
       else if(f==='mon')ed.morn=e.target.checked?(b.querySelector('[data-f="morn"]').value||'07:00'):'';
       else if(f==='eve'){if(ed.eve||b.querySelector('[data-f="eon"]').checked)ed.eve=v;}
       else if(f==='morn'){if(ed.morn||b.querySelector('[data-f="mon"]').checked)ed.morn=v;}
-      else return;L.save();};},
+      else return;
+      /* only a new kind of rule changes the form; every other edit is saved in place */
+      if(f==='rt')L.save();else{L.save(true);const h=b.querySelector('[data-next]');if(h)h.textContent=L.nextText(ed)||'—';}};},
   sleep(b){const L=Life,k=dkey(),s=L.peek(k).sleep,d=new Date(),bed=s?new Date(s.bed):new Date(d.getFullYear(),d.getMonth(),d.getDate()-1,23,30),wake=s?new Date(s.wake):new Date(d.getFullYear(),d.getMonth(),d.getDate(),7,0);
     b.innerHTML=`<p class="hint" style="margin-top:0">ゆうべ眠った時刻と、今朝起きた時刻。</p>
       <div class="row"><label class="lbl" style="flex:1">寝た<input class="in" type="time" data-b value="${pad2(bed.getHours())}:${pad2(bed.getMinutes())}" style="width:100%;margin-top:4px"></label>
@@ -5063,7 +5105,7 @@ const LifeSheets={
       <div class="grp pad" style="margin-top:8px"><label class="lbl">水の目安<select class="in" data-wg style="margin-left:8px">${[4,5,6,7,8,9,10,12].map(n=>`<option ${c.waterGoal===n?'selected':''} value="${n}">${lj(n+'杯',n+' glasses')}</option>`).join('')}</select></label></div>
       <div class="grp-h">${ic('pill')}薬・サプリ</div><div class="grp pad">
       ${c.meds.map(m=>`<div class="it" data-id="${m.id}">${ic('pill')}<span class="tx" data-u>${esc(m.name)}</span><span class="tag">${(m.times||[]).join(lj('・',' · '))}</span><button class="del" data-a="mdel" aria-label="削除">${ic('trash')}</button></div>`).join('')}
-      <div class="row"><input class="in" data-mn placeholder="名前（例：ビタミンD）" maxlength="30" style="flex:1" aria-label="薬の名前"><input class="in" type="time" data-mt value="08:00" aria-label="時刻" style="width:110px"><button class="btn" data-a="madd" aria-label="薬を追加">${ic('plus')}</button></div>
+      <div class="row"><input class="in" data-mn placeholder="名前（例：ビタミンD）" maxlength="30" style="flex:1;min-width:0" aria-label="薬の名前"><input class="in" type="time" data-mt value="08:00" aria-label="時刻" style="width:110px"><button class="btn" data-a="madd" aria-label="薬を追加">${ic('plus')}</button></div>
       <p class="hint">時刻になると知らせ、今日の流れにチェック欄が出ます。同じ薬を1日に何回か飲むときは、時刻を変えてもう一度追加してください。</p></div>
       <div class="grp-h">${ic('bell')}知らせ</div><div class="grp pad"><p class="hint" style="margin:0">ルーティン・くらしの予定・薬の時刻は、CELL を開いている間（チル・カジュアル・ライフのどれでも）音と表示で知らせます。App Store 版では、画面のロック中も通知で知らせます。</p></div>`;
     segs(b,'ls');
@@ -5127,7 +5169,7 @@ const Bridge={
   ringStopped(){if(ringToast&&ringToast.isConnected){ringToast.classList.add('out');const t=ringToast;setTimeout(()=>t.remove(),260);}ringToast=null;}
 };
 window.CELLBridge=Bridge;
-addEventListener('storage',e=>{if(e.key==='cell:tasks')Bridge.tasksChanged();else if(e.key==='cell:stats')Bridge.statsChanged();else if(e.key==='suikyo-clock-v1')Bridge.alarmsChanged();});
+addEventListener('storage',e=>{if(e.key==='cell:life'||e.key==='cell:lifeDays'){Life.load();Life.dirty=true;['lroutines','lhabits','lchores','lset'].forEach(k=>UI.refreshWin(k));}else if(e.key==='cell:tasks')Bridge.tasksChanged();else if(e.key==='cell:stats')Bridge.statsChanged();else if(e.key==='suikyo-clock-v1')Bridge.alarmsChanged();});
 /* ================= UI glue ================= */
 const DOCK=[['timer','タイマー','T'],['calendar','カレンダー','K'],['reminders','リマインダー','R',1],['tasks','タスク','L'],['mixer','サウンド','M'],['memo','メモ','E',1],['log','記録','G',1],['breath','深呼吸','B',1]];
 UI={
@@ -5236,7 +5278,7 @@ document.addEventListener('keydown',e=>{
   else if(e.key==='ArrowRight')shiftScene(1);else if(e.key==='ArrowLeft')shiftScene(-1);
   else if(/^[1-8]$/.test(k))applyScene(SCENE_ORDER[+k-1]);
   else if(k==='n')Player.setTrack(S.track+1);
-  else if(k==='c')Type.set('casual');else if(k==='h')Type.set('life');
+  else if(k==='c')Type.set('casual');else if(k==='h'&&!Night.isOn)Type.set('life');
   else if(k==='p')WM.toggle('modes');else if(e.key===',')WM.toggle('settings');
   else if(k==='w'&&Pip.ok)Pip.toggle();
   else if(k==='f')zen();else if(k==='o')Focus.toggle();else if(k==='g')WM.toggle('log');else if(k==='b')Breath.start();else if(e.key==='?')help();

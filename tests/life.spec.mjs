@@ -298,3 +298,84 @@ test('the App Store build hands garbage-day and medicine alerts to iOS while in 
   expect(first[0].title).toBe('明日のくらし');
   expect(first[0].at).toBe(new Date('2026-10-28T20:00:00+09:00').getTime());
 });
+
+/* ---- regressions found in review ---- */
+
+test('two windows (chill on the laptop, Life on the monitor) never erase each other\'s records', async ({ page, context }) => {
+  await openLife(page);
+  const other = await context.newPage();
+  // the type is remembered, so the second window opens straight into Life
+  await other.goto('./');
+  await expect(other.locator('#life')).toBeVisible();
+  await page.locator('.lf-wa [data-v="1"]').tap();
+  await page.locator('.lf-wa [data-v="1"]').tap();
+  await other.locator('.lf-mood [data-v="4"]').tap();
+  const day = await page.evaluate(() => { const d = JSON.parse(localStorage.getItem('cell:lifeDays')); return Object.values(d)[0]; });
+  expect(day).toMatchObject({ water: 2, mood: 4 });
+  // and the first window shows the other's change without a reload
+  await expect(page.locator('.lf-mood [data-v="4"]')).toHaveAttribute('aria-pressed', 'true');
+  await other.close();
+});
+
+test('a time typed digit by digit is kept whole, and the click after editing a field works', async ({ page }) => {
+  await openLife(page, life({ routines: [{ id: 'r1', name: '朝', time: '06:00', days: [], steps: [{ id: 's1', text: '水', min: 0, act: '' }] }] }));
+  await page.locator('[data-go="lroutines"]').tap();
+  const s = sheet(page, 'lroutines');
+  await s.locator('.lf-li').tap();
+  await s.locator('[data-f="time"]').fill('07:45');
+  await s.locator('[data-s="text"]').first().fill('水を一杯');
+  await s.locator('[data-a="sadd"]').tap();
+  await expect(s.locator('.lf-step')).toHaveCount(2);
+  const r = await page.evaluate(() => JSON.parse(localStorage.getItem('cell:life')).routines[0]);
+  expect(r.time).toBe('07:45');
+  expect(r.steps[0].text).toBe('水を一杯');
+});
+
+test('a backup with broken or hostile Life data still starts, and nothing in it runs as markup', async ({ page }) => {
+  await page.addInitScript(() => { window.__x = 0; });
+  await openLife(page, life({ routines: [{ id: 'r1', name: '朝' }, { id: 'bad id"><b>', name: 'x', steps: [] }],
+    chores: [{ id: 'c1', name: '燃えるゴミ', kind: 'gomi', rule: { t: 'week', days: [0, 1, 2, 3, 4, 5, 6] }, morn: '<img src=x onerror="window.__x=1">' }],
+    meds: [{ id: 'm1', name: 'D', times: 'oops' }], habits: 'nope' }));
+  await expect(page.locator('[data-ch="c1"]')).toBeVisible();
+  await expect(page.locator('[data-ch="c1"] img')).toHaveCount(0);
+  expect(await page.evaluate(() => window.__x)).toBe(0);
+  await expect(page.locator('.lf-it[data-kind="routine"]')).toHaveCount(1);
+});
+
+test('breathing from a routine step shows above the routine; Escape ends the breathing first', async ({ page }) => {
+  await openLife(page, life({ routines: [{ id: 'r1', name: '夜', time: '', days: [], steps: [{ id: 's1', text: '深呼吸', min: 1, act: 'breath' }] }] }));
+  await page.locator('[data-a="run"]').tap();
+  await page.locator('#lfRun [data-ra="act"]').tap();
+  await expect(page.locator('#breath')).toBeVisible();
+  const top = await page.evaluate(() => { const b = document.querySelector('#brEnd').getBoundingClientRect(); const el = document.elementFromPoint(b.x + b.width / 2, b.y + b.height / 2); return !!el.closest('#breath'); });
+  expect(top).toBe(true);
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#breath')).toBeHidden();
+  await expect(page.locator('#lfRun')).toBeVisible();
+});
+
+test('"not this time" on an every-7-days chore starts the count again; a holiday flag does not apply to it', async ({ page }) => {
+  await page.clock.install({ time: WED });
+  await openLife(page, life({ chores: [{ id: 'h1', name: 'シーツ', kind: 'home', rule: { t: 'every', n: 7, from: '2026-10-21' }, last: '2026-10-21', hol: true }] }));
+  const row = page.locator('[data-col="a"] [data-ch="h1"]');
+  await expect(row).toBeVisible();
+  await row.click({ button: 'right' });
+  await page.locator('.menu button', { hasText: '今回はなし' }).click();
+  await expect(row).toHaveCount(0);
+  const c = await page.evaluate(() => JSON.parse(localStorage.getItem('cell:life')).chores[0]);
+  expect(c.last).toBe('2026-10-28');
+});
+
+test('a nap does not replace the night\'s sleep', async ({ page }) => {
+  await page.clock.install({ time: new Date('2026-10-28T14:00:00+09:00') });
+  const wake = new Date('2026-10-28T07:00:00+09:00').getTime();
+  await openLife(page, { 'cell:lifeDays': { '2026-10-28': { sleep: { bed: wake - 7 * 36e5, wake } } } });
+  await expect(page.locator('.lf-sl')).toContainText('7時間00分');
+  await page.locator('.lf-sw [data-type="chill"]').tap();
+  await page.keyboard.press('p');
+  await page.locator('.win.open [data-mode="sleep"]').tap();
+  await page.clock.fastForward('01:30:00');
+  await page.keyboard.press('Escape');
+  await page.keyboard.press('h');
+  await expect(page.locator('.lf-sl')).toContainText('7時間00分');
+});
