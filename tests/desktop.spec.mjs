@@ -44,7 +44,7 @@ for (const d of DESKS) {
     });
 
     test('mouse: moving reveals, resting hides the controls and the cursor', async ({ page }) => {
-      await openApp(page);
+      await openApp(page, { autohide: true });
       await page.locator('#enter').click();
       await expect(page.locator('body')).toHaveClass(/\brest\b/, { timeout: 8000 });
       expect(await page.evaluate(() => getComputedStyle(document.body).cursor)).toBe('none');

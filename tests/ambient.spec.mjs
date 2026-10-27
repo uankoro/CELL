@@ -4,7 +4,7 @@ import { test, expect, openApp, enter, openWin, openModes, pickScene, menuItem, 
 const rest = page => expect(page.locator('body')).toHaveClass(/\brest\b/, { timeout: 9000 });
 
 test('controls step aside at rest; the touch that wakes them presses nothing', async ({ page }) => {
-  await openApp(page);
+  await openApp(page, { autohide: true });
   await enter(page);
   await rest(page);
   // transparent and untouchable, but still there for VoiceOver
@@ -24,7 +24,7 @@ test('controls step aside at rest; the touch that wakes them presses nothing', a
 });
 
 test('nothing hides while a sheet is open, and the setting keeps the controls on screen', async ({ page }) => {
-  await openApp(page);
+  await openApp(page, { autohide: true });
   await enter(page);
   await openWin(page, 'timer');
   await page.waitForTimeout(6500);
@@ -200,7 +200,7 @@ test('the Escape key closes an open menu before it closes the sheet behind it', 
 });
 
 test('a mouse move wakes the controls even when the browser reports no movement delta (WebKit)', async ({ page }) => {
-  await openApp(page);
+  await openApp(page, { autohide: true });
   await enter(page);
   await rest(page);
   await page.evaluate(() => {
