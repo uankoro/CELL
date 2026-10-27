@@ -22,7 +22,8 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps ${{ matrix.browser }}
-      - run: npx playwright test --project="${{ matrix.browser }}-*"
+      # errors are printed as they happen ("line"), and a run that is clearly broken stops early with its summary
+      - run: npx playwright test --project="${{ matrix.browser }}-*" --reporter=line --max-failures=20
         env:
           CI: '1'
       - uses: actions/upload-artifact@v4
