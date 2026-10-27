@@ -50,3 +50,31 @@ test('text contrast with reduced transparency (solid panels) meets AA', async ({
     expect(r.violations.flatMap(v => v.nodes.map(n => `${id}: ${n.target.join(' ')} ${n.any[0]?.message || ''}`)), id).toEqual([]);
   }
 });
+
+test('Life: today, the look back, its sheets and a routine in progress', async ({ page }) => {
+  test.slow();
+  await openApp(page, { storage: { 'cell:life': { routines: [{ id: 'r1', name: '朝', time: '07:00', days: [], steps: [{ id: 's1', text: '水を一杯', min: 1, act: 'water' }] }],
+    habits: [{ id: 'h1', name: 'ストレッチ', per: 'day', target: 1 }], chores: [{ id: 'c1', name: '燃えるゴミ', kind: 'gomi', rule: { t: 'week', days: [0, 1, 2, 3, 4, 5, 6] } }],
+    meds: [{ id: 'm1', name: 'ビタミンD', times: ['08:00'] }] } } });
+  await page.locator('#enterLife').tap();
+  await expect(page.locator('#life')).toBeVisible();
+  await audit(page, 'life');
+  // text over the blurred room is solid enough to read
+  const c = await new AxeBuilder({ page }).include('#life').withRules(['color-contrast']).analyze();
+  expect(c.violations.flatMap(v => v.nodes.map(n => `${n.target.join(' ')} ${n.any[0]?.message || ''}`)), 'life contrast').toEqual([]);
+  for (const id of ['lroutines', 'lhabits', 'lchores', 'lsleep']) {
+    await page.locator(`#life [data-go="${id}"]`).first().tap();
+    await expect(page.locator(`.win.open[data-win="${id}"]`)).toBeVisible();
+    await audit(page, id);
+    await page.keyboard.press('Escape');
+  }
+  await page.locator('[data-la="set"]').tap();
+  await audit(page, 'lset');
+  await page.keyboard.press('Escape');
+  await page.locator('[data-a="run"]').tap();
+  await expect(page.locator('#lfRun')).toBeVisible();
+  await audit(page, 'routine');
+  await page.keyboard.press('Escape');
+  await page.locator('.lf-tabs [data-tab="week"]').tap();
+  await audit(page, 'look back');
+});

@@ -43,6 +43,21 @@ for (const d of DESKS) {
       await expect(page.locator('#nowTask')).toContainText('企画書の見直し');
     });
 
+    test('Life fits: three columns (one on a tall window), nothing off screen', async ({ page }) => {
+      await openApp(page, { storage: { 'cell:life': { habits: [{ id: 'h1', name: 'ストレッチ', per: 'day', target: 1 }], chores: [{ id: 'c1', name: '燃えるゴミ', kind: 'gomi', rule: { t: 'week', days: [0, 1, 2, 3, 4, 5, 6] } }] } } });
+      await page.locator('#enterLife').click();
+      await expect(page.locator('#life')).toBeVisible();
+      const r = await page.evaluate(() => {
+        const se = document.scrollingElement, cols = [...document.querySelectorAll('.lf-col')].map(c => c.getBoundingClientRect());
+        return { sw: se.scrollWidth, W: innerWidth, H: innerHeight, cols: cols.map(b => ({ l: b.left, r: b.right, t: b.top })), top: document.querySelector('.lf-top').getBoundingClientRect().right };
+      });
+      expect(r.sw).toBeLessThanOrEqual(r.W);
+      expect(r.top).toBeLessThanOrEqual(r.W + 0.5);
+      for (const c of r.cols) { expect(c.l).toBeGreaterThanOrEqual(0); expect(c.r).toBeLessThanOrEqual(r.W + 0.5); }
+      const sameRow = r.cols.every(c => Math.abs(c.t - r.cols[0].t) < 2);
+      expect(sameRow).toBe(r.W > r.H);
+    });
+
     test('mouse: moving reveals, resting hides the controls and the cursor', async ({ page }) => {
       await openApp(page, { autohide: true });
       await page.locator('#enter').click();
