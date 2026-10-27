@@ -2,7 +2,7 @@
 import { test as base, expect } from '@playwright/test';
 
 // noise that does not come from the app
-const IGNORE = [/fonts\.(googleapis|gstatic)\.com/, /Failed to load resource.*fonts/, /net::ERR_INTERNET_DISCONNECTED/, /ERR_NAME_NOT_RESOLVED/];
+const IGNORE = [/Service Worker registration blocked by Playwright/, /fonts\.(googleapis|gstatic)\.com/, /Failed to load resource.*fonts/, /net::ERR_INTERNET_DISCONNECTED/, /ERR_NAME_NOT_RESOLVED/];
 
 export const test = base.extend({
   issues: async ({}, use) => { await use([]); },

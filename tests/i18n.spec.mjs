@@ -1,6 +1,9 @@
 // English UI: everything translated (chill + casual), user text untouched, exact round trip back to Japanese.
 import { test, expect, openApp, enter, openWin, openModes, menuItem, pickScene } from './fixtures.mjs';
 
+// the weather is answered by a stand-in; in WebKit a service worker would send the request past it to the real network
+test.use({ serviceWorkers: 'block' });
+
 const JP = /[぀-ヿ㐀-鿿！-～]/;
 async function leftovers(page) {
   return page.evaluate(src => {

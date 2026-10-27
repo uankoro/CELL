@@ -2,6 +2,9 @@
 // (garbage days, chores every N days, payments), the weather for going out, one-tap records, habits without streaks, and a look back.
 import { test, expect, openApp, menuItem, reveal } from './fixtures.mjs';
 
+// the weather is answered by a stand-in; in WebKit a service worker would send the request past it to the real network
+test.use({ serviceWorkers: 'block' });
+
 // Wednesday 28 October 2026, 10:00 in Tokyo
 const WED = new Date('2026-10-28T10:00:00+09:00');
 const life = (o = {}) => ({ 'cell:life': Object.assign({ track: { mood: true, sleep: true, water: true }, waterGoal: 8, routines: [], habits: [], chores: [], meds: [] }, o) });
