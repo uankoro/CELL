@@ -76,7 +76,7 @@ test('English: Life, its look back and its sheets are translated; names typed by
   await page.route(/open-meteo/, async r => {
     const k = await page.evaluate(() => { const d = new Date(), p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`; });
     const hours = Array.from({ length: 24 }, (_, i) => `${k}T${String(i).padStart(2, '0')}:00`);
-    r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ current: { temperature_2m: 20, weather_code: 2 },
+    r.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify({ current: { temperature_2m: 20, weather_code: 2 },
       hourly: { time: hours, temperature_2m: hours.map(() => 20), precipitation_probability: hours.map(() => 60), weather_code: hours.map(() => 61) },
       daily: { time: [k], weather_code: [61], temperature_2m_max: [24], temperature_2m_min: [12], precipitation_probability_max: [60], uv_index_max: [3] } }) });
   });

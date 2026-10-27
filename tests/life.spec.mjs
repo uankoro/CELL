@@ -203,7 +203,7 @@ test('adding a habit from the sheet', async ({ page }) => {
 test('the weather: temperature, rain and one line of advice; the last forecast is kept when offline', async ({ page }) => {
   await page.clock.install({ time: WED });
   let online = true;
-  await page.route(/api\.open-meteo\.com/, r => online ? r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(forecast()) }) : r.abort());
+  await page.route(/api\.open-meteo\.com/, r => online ? r.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify(forecast()) }) : r.abort());
   await openLife(page, life({ place: { name: '東京', lat: 35.69, lon: 139.69 } }));
   const sky = page.locator('.lf-sky');
   await expect(sky).toContainText('18°');
@@ -216,7 +216,7 @@ test('the weather: temperature, rain and one line of advice; the last forecast i
 
 test('choosing a weather place in Life settings', async ({ page }) => {
   await page.clock.install({ time: WED });
-  await page.route(/api\.open-meteo\.com/, r => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(forecast({ rain: 10, max: 33, min: 24 })) }));
+  await page.route(/api\.open-meteo\.com/, r => r.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify(forecast({ rain: 10, max: 33, min: 24 })) }));
   await openLife(page);
   await page.locator('.lf-sky-set').tap();
   await sheet(page, 'lset').locator('[data-place]').selectOption('大阪');
