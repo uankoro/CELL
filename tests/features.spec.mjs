@@ -132,3 +132,15 @@ test.describe('first-run tour', () => {
     await expect(page.locator('#tour')).toBeVisible();
   });
 });
+
+test('records: the last seven days become an image with the room behind them', async ({ page }) => {
+  const now = new Date();
+  await openApp(page, { storage: { 'cell:stats': { [k(now)]: { focus: 95, pomos: 3, tasks: 2 } } } });
+  await enter(page);
+  const win = await openWin(page, 'log');
+  const [dl] = await Promise.all([page.waitForEvent('download'), win.locator('[data-a="card"]').tap()]);
+  expect(dl.suggestedFilename()).toMatch(/^cell-\d{4}-\d{2}-\d{2}\.png$/);
+  const path = await dl.path();
+  const { statSync } = await import('node:fs');
+  expect(statSync(path).size).toBeGreaterThan(20000);
+});
