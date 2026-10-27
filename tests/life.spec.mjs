@@ -195,7 +195,12 @@ test('adding a habit from the sheet', async ({ page }) => {
   await s.locator('[data-per] [data-v="week"]').tap();
   await s.locator('[data-t]').selectOption('4');
   await s.locator('[data-a="add"]').tap();
-  await expect(s.locator('.it')).toContainText('週4回');
+  try { await expect(s.locator('.it')).toContainText('週4回'); } catch (e) {
+    // diagnostics for a WebKit-only failure on CI: what the sheet and the store look like at this moment
+    console.log('DIAG', JSON.stringify(await page.evaluate(() => ({ ae: document.activeElement && document.activeElement.outerHTML.slice(0, 120), n: (document.querySelector('.win.open [data-n]') || {}).value,
+      t: (document.querySelector('.win.open [data-t]') || {}).value, life: localStorage.getItem('cell:life'), html: (document.querySelector('.win.open[data-win="lhabits"] .win-b') || {}).innerHTML?.slice(0, 900) }))));
+    throw e;
+  }
   await page.keyboard.press('Escape');
   await expect(page.locator('[data-col="c"] .lf-hab')).toContainText('今週 0/4回');
 });
