@@ -1,6 +1,6 @@
 {
   "name": "cell",
-  "version": "3.0.0",
+  "version": "4.0.0",
   "private": true,
   "description": "CELL — 八つの部屋で、静かに過ごす（iPhone・iPad・PCのサブモニター向けPWA。App Store版の準備あり）",
   "scripts": {

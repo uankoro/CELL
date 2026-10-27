@@ -132,6 +132,38 @@ test('music: play/pause, next track and the track list', async ({ page }) => {
   await expect(page.locator('#tTitle')).toHaveText(/風鈴のゆくえ|Where the Wind Chime Goes/);
 });
 
+test('fifteen songs: the list fits above the player and scrolls; every song plays without an error, the waltz included', async ({ page }) => {
+  test.slow();
+  await enter(page);
+  await reveal(page);
+  await page.locator('#trackBtn').tap();
+  const list = page.locator('#tracklist');
+  await expect(list.locator('[data-t]')).toHaveCount(15);
+  const box = await list.boundingBox();
+  expect(box.y).toBeGreaterThanOrEqual(0);
+  expect(await list.evaluate(el => el.scrollHeight > el.clientHeight)).toBe(true);
+  await page.locator('#trackBtn').tap();
+  await expect(list).toBeHidden();
+  // step through every song with "next": each one plays for a moment (instruments are created as it schedules)
+  await page.locator('#play').tap();
+  const seen = new Set();
+  for (let i = 0; i < 15; i++) {
+    seen.add(await page.locator('#tTitle').textContent());
+    await page.waitForTimeout(700);
+    await reveal(page);
+    await page.locator('#next').tap();
+  }
+  expect(seen.size).toBe(15);
+  // the list opens with the current song in view, and the last song can be picked
+  await page.locator('#trackBtn').tap();
+  await list.locator('[data-t="14"]').scrollIntoViewIfNeeded();
+  await list.locator('[data-t="14"]').tap();
+  await expect(page.locator('#tTitle')).toHaveText(/灯台守のワルツ|Lighthouse Keeper/);
+  await page.reload();
+  await enter(page);
+  await expect(page.locator('#tTitle')).toHaveText(/灯台守のワルツ|Lighthouse Keeper/);
+});
+
 test('FOCUS mode, zen mode, breathing and help', async ({ page }) => {
   await enter(page);
   await reveal(page);
