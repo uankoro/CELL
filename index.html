@@ -153,7 +153,7 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;stro
 .sc{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;transition:transform var(--dur-3) var(--ease-spring)}
 .sc{flex:none}
 .sc .th{width:68px;height:44px;border-radius:var(--r-md);overflow:hidden;border:1px solid rgba(255,255,255,.2);background:#111 center/cover no-repeat;box-shadow:var(--sh-1);transition:border-color var(--dur-2),box-shadow var(--dur-3),filter var(--dur-3);filter:saturate(.75) brightness(.8)}
-.sc .th canvas{width:100%;height:100%;display:block}
+.sc .th canvas,.sc .th img{width:100%;height:100%;display:block;object-fit:cover}
 .sc span{font-size:var(--fs-xs);white-space:nowrap;color:var(--ink2);letter-spacing:.08em;transition:color .2s}
 .sc kbd{position:absolute;top:4px;left:6px;font:600 10px var(--mono);color:rgba(255,255,255,.6)}
 @media (hover:none){.sc kbd{display:none}}
@@ -4592,7 +4592,9 @@ setInterval(()=>{if(Type.cur==='casual')UI.title();},1000);
 
 /* thumbnails rendered from the real scenes */
 function thumbs(){SCENE_ORDER.forEach((id,i)=>setTimeout(()=>{try{const w=480,h=300,c=mk(w,h),g=c.getContext('2d'),sc=SCENES[id](w,h,.35);
-  for(let k=0;k<30;k++)sc.draw(g,4+k*.05,.05);const th=document.querySelector(`.sc[data-s="${id}"] .th`);th.innerHTML='';th.appendChild(c);}catch(e){console.error(e);}},200+i*140));}
+  for(let k=0;k<30;k++)sc.draw(g,4+k*.05,.05);const th=document.querySelector(`.sc[data-s="${id}"] .th`);
+  /* kept as a still image, not a live canvas: eight canvases inside a blurred, animated sheet are heavy for WebKit to composite */
+  const img=new Image();img.alt='';img.decoding='async';img.src=c.toDataURL('image/jpeg',.82);th.innerHTML='';th.appendChild(img);c.width=c.height=0;}catch(e){console.error(e);}},200+i*140));}
 
 /* boot */
 function boot(){

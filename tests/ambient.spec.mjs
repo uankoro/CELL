@@ -93,13 +93,13 @@ test('the rooms live in the 部屋と過ごし方 sheet, drawn once and kept acr
   await enter(page);
   const win = await openModes(page);
   await expect(win.locator('.sc')).toHaveCount(8);
-  await expect(win.locator('.sc .th canvas')).toHaveCount(8, { timeout: 8000 });
+  await expect(win.locator('.sc .th img')).toHaveCount(8, { timeout: 8000 });
   await win.locator('.sc[data-s="sea"]').tap();
   await expect(page.locator('body')).toHaveAttribute('data-scene', 'sea');
   await expect(win.locator('.sc[data-s="sea"]')).toHaveAttribute('aria-pressed', 'true');
   await page.keyboard.press('Escape');
   const again = await openModes(page);
-  await expect(again.locator('.sc .th canvas')).toHaveCount(8);
+  await expect(again.locator('.sc .th img')).toHaveCount(8);
 });
 
 test('silent alerts: a timer ends with light at the edge, not a sound', async ({ page }) => {
