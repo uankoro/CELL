@@ -78,12 +78,13 @@ test('pulling the sheet the wrong way rubber-bands back', async ({ page }) => {
 });
 
 test('swipe a banner up to dismiss it', async ({ page }) => {
-  const win = await openWin(page, 'memo');
-  await win.locator('[data-m]').fill('バナー');
-  await win.locator('[data-a="stick"]').tap();
+  // the deletion banner (with Undo) stays for 20 s, long enough on a slow machine; it is grabbed by its title
+  const win = await openWin(page, 'tasks');
+  await addTask(page, win, 'バナー');
+  await win.locator('.task', { hasText: 'バナー' }).locator('[data-a="del"]').tap();
   const t = page.locator('.toast').first();
   await expect(t).toBeVisible();
-  await drag(page, t, 0, -80, 5);
+  await drag(page, t.locator('b').first(), 0, -80, 5);
   await expect(page.locator('.toast')).toHaveCount(0, { timeout: 2000 });
 });
 
