@@ -27,6 +27,9 @@ test.describe('long-running session', () => {
     const t0 = Date.now();
     let i = 0;
     while (Date.now() - t0 < 120_000) await cycle(i++);
+    // compare in the same room as the first sample: each room's clock has its own number of elements
+    await page.keyboard.press('6');
+    await page.waitForTimeout(400);
     const end = await sample();
     const growMB = (end.heap - base.heap) / 1048576;
     console.log(`heap ${Math.round(base.heap / 1048576)}MB → ${Math.round(end.heap / 1048576)}MB, DOM ${base.dom} → ${end.dom}, cycles ${i}`);
