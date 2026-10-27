@@ -47,7 +47,7 @@ test.describe('long-running session', () => {
     const st = await page.evaluate(() => Object.values(JSON.parse(localStorage.getItem('cell:stats') || '{}'))[0]);
     expect(st).toMatchObject({ focus: 25, pomos: 1 });
     // the timer moved on to the break
-    await expect(page.locator('.win.open[data-win="timer"] [data-ph]')).toContainText(/小休憩|Short Break/);
+    await expect(page.locator('.win.open[data-win="timer"] [data-ph]')).toContainText(/短い休憩|Short Break/);
   });
 
   test('sleep mode: 30-minute sleep timer stops music and ambience on a fast-forwarded clock', async ({ page }) => {

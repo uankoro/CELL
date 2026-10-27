@@ -51,18 +51,56 @@ export async function settled(page, win) {
   await page.waitForFunction(el => el && el.getAnimations().length === 0 && getComputedStyle(el).opacity === '1' && ['none', 'matrix(1, 0, 0, 1, 0, 0)'].includes(getComputedStyle(el).transform), await win.elementHandle());
 }
 
+/** the controls step aside at rest; a touch on the room brings them back (that touch presses nothing) */
+export async function reveal(page) {
+  if (await page.evaluate(() => document.body.classList.contains('rest'))) {
+    const vp = page.viewportSize();
+    await page.mouse.move(Math.round(vp.width / 2), Math.round(vp.height / 2));
+    await page.mouse.move(Math.round(vp.width / 2) + 6, Math.round(vp.height / 2) + 4);
+  }
+  await expect(page.locator('#bottom')).toBeVisible();
+  await expect(page.locator('body')).not.toHaveClass(/\brest\b/);
+}
+
+export async function tapTool(page, id) {
+  await reveal(page);
+  const btn = page.locator(`#dock [data-w="${id}"]`);
+  if (await btn.isVisible()) await btn.tap();
+  else {
+    // narrow screens fold the less-used tools under "more"
+    await page.locator('#dock [data-more]').tap();
+    await page.locator(`#dockMore [data-w="${id}"]`).tap();
+  }
+}
+
 export async function openWin(page, id) {
-  await page.locator(`#dock [data-w="${id}"]`).tap();
+  await tapTool(page, id);
   const win = page.locator(`.win.open[data-win="${id}"]`);
   await settled(page, win);
   return win;
 }
 
 export async function openModes(page) {
+  await reveal(page);
   await page.locator('#brand').tap();
   const win = page.locator('.win.open[data-win="modes"]');
   await settled(page, win);
   return win;
+}
+
+/** rooms are picked in the "部屋と過ごし方" sheet */
+export async function pickScene(page, s) {
+  const win = page.locator('.win.open[data-win="modes"]');
+  if (!(await win.isVisible())) await openModes(page);
+  await win.locator(`.sc[data-s="${s}"]`).tap();
+  await expect(page.locator('body')).toHaveAttribute('data-scene', s);
+}
+
+/** an item of the ⋯ (display and more) menu */
+export async function menuItem(page, id) {
+  await reveal(page);
+  await page.locator('#btnMore').tap();
+  await page.locator(`#morePop #${id}`).tap();
 }
 
 export async function closeWin(page, id) {

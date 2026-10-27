@@ -1,10 +1,10 @@
 // Regressions for bugs found by the independent reviews (each one reproduced before it was fixed).
-import { test, expect, openApp, enter, openWin, openModes } from './fixtures.mjs';
+import { test, expect, openApp, enter, openWin, openModes, menuItem, pickScene } from './fixtures.mjs';
 
 test.beforeEach(async ({ page }) => { await openApp(page); await enter(page); });
 
 test('importing a backup keeps the backup’s casual alarms and settings (the casual clock must not write its old state back)', async ({ page }) => {
-  await page.locator('#btnType').tap();
+  await menuItem(page, 'btnType');
   await expect(page.locator('#casual')).toBeVisible();
   await page.frameLocator('#casual').locator('[data-type="chill"]').tap();
   const backup = JSON.stringify({ app: 'CELL', v: 3, data: {

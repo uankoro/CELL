@@ -1,5 +1,5 @@
 // English UI: everything translated (chill + casual), user text untouched, exact round trip back to Japanese.
-import { test, expect, openApp, enter, openWin, openModes } from './fixtures.mjs';
+import { test, expect, openApp, enter, openWin, openModes, menuItem, pickScene } from './fixtures.mjs';
 
 const JP = /[぀-ヿ㐀-鿿！-～]/;
 async function leftovers(page) {
@@ -43,7 +43,7 @@ test('English: every screen is translated and user text stays as typed', async (
   await page.keyboard.press('?');
   expect(await leftovers(page), 'help').toEqual([]);
   await page.keyboard.press('Escape');
-  await page.locator('#btnType').tap();
+  await menuItem(page, 'btnType');
   await expect(page.locator('#casual')).toBeVisible();
   await page.waitForTimeout(400);
   expect(await leftovers(page), 'casual').toEqual([]);

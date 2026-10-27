@@ -1,5 +1,5 @@
 // Every feature that existed before the PWA work must keep working.
-import { test, expect, openApp, enter, openWin, closeWin } from './fixtures.mjs';
+import { test, expect, openApp, enter, openWin, closeWin, reveal, pickScene, menuItem, tapTool } from './fixtures.mjs';
 
 const SCENES = ['drive', 'camp', 'cafe', 'engawa', 'base', 'onsen', 'sea', 'orbit'];
 
@@ -15,8 +15,7 @@ test('boot screen and entering the room', async ({ page }) => {
 test('all eight scenes switch, each with its own clock', async ({ page }) => {
   await enter(page);
   for (const s of SCENES) {
-    await page.locator(`.sc[data-s="${s}"]`).tap();
-    await expect(page.locator('body')).toHaveAttribute('data-scene', s);
+    await pickScene(page, s);
     await expect(page.locator(`#clock.ck-${s}`)).not.toBeEmpty();
   }
   expect(await page.evaluate(() => localStorage.getItem('cell:scene'))).toBe('"orbit"');
@@ -121,6 +120,7 @@ test('memo, sticky notes and the pinned widgets', async ({ page }) => {
 
 test('music: play/pause, next track and the track list', async ({ page }) => {
   await enter(page);
+  await reveal(page);
   await page.locator('#play').tap();
   await expect(page.locator('#play')).toHaveAttribute('aria-label', /再生|Play/);
   await page.locator('#next').tap();
@@ -134,15 +134,16 @@ test('music: play/pause, next track and the track list', async ({ page }) => {
 
 test('FOCUS mode, zen mode, breathing and help', async ({ page }) => {
   await enter(page);
+  await reveal(page);
   await page.locator('#btnFocus').tap();
   await expect(page.locator('body')).toHaveClass(/\bfocus\b/);
   await page.locator('[data-fa="exit"]').tap();
   await expect(page.locator('body')).not.toHaveClass(/\bfocus\b/);
-  await page.locator('#btnZen').tap();
+  await menuItem(page, 'btnZen');
   await expect(page.locator('body')).toHaveClass(/\bzen\b/);
   await page.locator('#stage').tap({ position: { x: 300, y: 200 } });
   await expect(page.locator('body')).not.toHaveClass(/\bzen\b/);
-  await page.locator('#dock [data-w="breath"]').tap();
+  await tapTool(page, 'breath');
   await expect(page.locator('#breath')).toBeVisible();
   await page.locator('#brEnd').tap();
   await expect(page.locator('#breath')).toBeHidden();
@@ -157,7 +158,7 @@ test('casual clock: switch, shared tasks, alarm add, back to chill', async ({ pa
   const win = await openWin(page, 'tasks');
   await win.locator('[data-in]').fill('共有タスク');
   await win.locator('[data-a="add"]').tap();
-  await page.locator('#btnType').tap();
+  await menuItem(page, 'btnType');
   await expect(page.locator('#casual')).toBeVisible();
   const fr = page.frameLocator('#casual');
   await expect(fr.locator('#tList')).toContainText('共有タスク');
@@ -167,7 +168,8 @@ test('casual clock: switch, shared tasks, alarm add, back to chill', async ({ pa
   await expect(fr.locator('body')).toHaveAttribute('data-mode', 'kawaii');
   await fr.locator('[data-type="chill"]').tap();
   await expect(page.locator('#casual')).toBeHidden();
-  await expect(page.locator('#stats')).toContainText(/アラーム|Alarm/);
+  // the alarm just added (next 12 hours) shows as "next up" under the clock
+  await expect(page.locator('#nextUp')).toBeVisible();
 });
 
 test('keyboard shortcuts still work', async ({ page }) => {

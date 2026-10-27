@@ -1,5 +1,5 @@
 // Data saved by the previous version (v1, before any schema marker) must survive the upgrade untouched.
-import { test, expect, openApp, enter, openWin } from './fixtures.mjs';
+import { test, expect, openApp, enter, openWin, menuItem, openModes, pickScene } from './fixtures.mjs';
 
 const today = new Date();
 const k = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -44,7 +44,7 @@ test('v1 data loads untouched and is marked with the current schema', async ({ p
 test('v1 casual data (alarms, mode) still shows in the casual clock', async ({ page }) => {
   await openApp(page, { storage: V1 });
   await enter(page);
-  await page.locator('#btnType').tap();
+  await menuItem(page, 'btnType');
   const fr = page.frameLocator('#casual');
   await expect(fr.locator('body')).toHaveAttribute('data-mode', 'pop');
   await expect(fr.locator('#aList')).toContainText('起床');
