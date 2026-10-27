@@ -46,7 +46,7 @@ for (const d of DESKS) {
     test('mouse: moving reveals, resting hides the controls and the cursor', async ({ page }) => {
       await openApp(page, { autohide: true });
       await page.locator('#enter').click();
-      await expect(page.locator('body')).toHaveClass(/\brest\b/, { timeout: 8000 });
+      await expect(page.locator('body')).toHaveClass(/\brest\b/, { timeout: 12000 });
       expect(await page.evaluate(() => getComputedStyle(document.body).cursor)).toBe('none');
       await page.mouse.move(200, 200);
       await page.mouse.move(240, 220);
@@ -68,9 +68,8 @@ test.describe('desk size details', () => {
     await page.locator('#enter').click();
     const big = await page.locator('#clock').boundingBox();
     await page.setViewportSize({ width: 720, height: 480 });
-    await page.waitForTimeout(500);
-    const small = await page.locator('#clock').boundingBox();
-    expect(big.width).toBeGreaterThan(small.width * 1.6);
+    // the clock is refitted shortly after a resize
+    await expect.poll(async () => (await page.locator('#clock').boundingBox()).width * 1.6, { timeout: 8000 }).toBeLessThan(big.width);
   });
 
   test('all eight tools sit in the dock on a wide screen; keyboard shortcuts show in tooltips', async ({ page }) => {

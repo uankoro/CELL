@@ -84,7 +84,8 @@ test('swipe a banner up to dismiss it', async ({ page }) => {
   await win.locator('.task', { hasText: 'バナー' }).locator('[data-a="del"]').tap();
   const t = page.locator('.toast', { hasText: /削除|deleted/ });
   await expect(t).toBeVisible();
-  await drag(page, t.locator('b').first(), 0, -80, 5);
+  // grabbed by its message line and pushed up past the threshold, staying on screen (moves above the top edge may be dropped)
+  await drag(page, t.locator('p').first(), 0, -45, 4);
   await expect(t).toHaveCount(0, { timeout: 3000 });
 });
 

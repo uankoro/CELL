@@ -59,8 +59,8 @@ export async function reveal(page) {
   const resting = () => page.evaluate(() => document.body.classList.contains('rest'));
   if (await resting()) {
     const vp = page.viewportSize();
-    await page.mouse.move(Math.round(vp.width / 2), Math.round(vp.height / 2));
-    await page.mouse.move(Math.round(vp.width / 2) + 6, Math.round(vp.height / 2) + 4);
+    // a few separate moves: WebKit may merge quick moves into one, and only a real change of position wakes the bar
+    for (const d of [0, 8, 16]) { await page.mouse.move(Math.round(vp.width / 2) + d, Math.round(vp.height / 2) + d / 2); await page.waitForTimeout(60); }
     // a touch screen may not report mouse moves: a touch on an empty spot of the room wakes them instead
     if (await resting() && await page.evaluate(() => matchMedia('(pointer:coarse)').matches)) await page.touchscreen.tap(Math.round(vp.width * 0.5), Math.round(vp.height * 0.6));
   }
