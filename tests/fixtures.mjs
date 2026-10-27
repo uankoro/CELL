@@ -70,20 +70,23 @@ export async function reveal(page) {
 
 /** tap a control in the bar; on a slow machine the bar may step aside between finding the button and tapping it,
  *  so it is brought back and tapped again */
-export async function tapBar(page, loc) {
+export async function tapBar(page, loc, done) {
   for (let i = 0; ; i++) {
+    // a slow tap may have worked even though the call timed out: never tap a second time once it has
+    if (i && done && await done().catch(() => false)) return;
     await reveal(page);
-    try { await loc.tap({ timeout: 3000 }); return; } catch (e) { if (i >= 4) throw e; }
+    try { await loc.tap({ timeout: 4000 }); return; } catch (e) { if (i >= 4) throw e; }
   }
 }
 
 export async function tapTool(page, id) {
   await reveal(page);
   const btn = page.locator(`#dock [data-w="${id}"]`);
-  if (await btn.isVisible()) await tapBar(page, btn);
+  const opened = () => id === 'breath' ? page.locator('#breath').isVisible() : page.locator(`.win.open[data-win="${id}"]`).isVisible();
+  if (await btn.isVisible()) await tapBar(page, btn, opened);
   else {
     // narrow screens fold the less-used tools under "more"
-    await tapBar(page, page.locator('#dock [data-more]'));
+    await tapBar(page, page.locator('#dock [data-more]'), () => page.locator('#dockMore').isVisible());
     await page.locator(`#dockMore [data-w="${id}"]`).tap();
   }
 }
@@ -96,7 +99,7 @@ export async function openWin(page, id) {
 }
 
 export async function openModes(page) {
-  await tapBar(page, page.locator('#brand'));
+  await tapBar(page, page.locator('#brand'), () => page.locator('.win.open[data-win="modes"]').isVisible());
   const win = page.locator('.win.open[data-win="modes"]');
   await settled(page, win);
   return win;
@@ -112,7 +115,7 @@ export async function pickScene(page, s) {
 
 /** an item of the ⋯ (display and more) menu */
 export async function menuItem(page, id) {
-  await tapBar(page, page.locator('#btnMore'));
+  await tapBar(page, page.locator('#btnMore'), () => page.locator('#morePop').isVisible());
   await page.locator(`#morePop #${id}`).tap();
 }
 

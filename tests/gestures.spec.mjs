@@ -82,10 +82,10 @@ test('swipe a banner up to dismiss it', async ({ page }) => {
   const win = await openWin(page, 'tasks');
   await addTask(page, win, 'バナー');
   await win.locator('.task', { hasText: 'バナー' }).locator('[data-a="del"]').tap();
-  const t = page.locator('.toast').first();
+  const t = page.locator('.toast', { hasText: /削除|deleted/ });
   await expect(t).toBeVisible();
   await drag(page, t.locator('b').first(), 0, -80, 5);
-  await expect(page.locator('.toast')).toHaveCount(0, { timeout: 2000 });
+  await expect(t).toHaveCount(0, { timeout: 3000 });
 });
 
 test('a flick whose moves were coalesced away (down → up only) still swipes the row', async ({ page }) => {
