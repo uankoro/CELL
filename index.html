@@ -888,7 +888,6 @@ input,textarea,[contenteditable="true"]{-webkit-user-select:text;user-select:tex
 }
 /* ===== v3: the room is the interface. At rest only the scene, the clock and one line under it are visible;
    the controls come back on touch. Layout holds from a 375pt phone to a portrait desk monitor and 4K. */
-#clock{zoom:var(--ck,1)}
 #top{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)}
 #brand{min-width:0;max-width:100%}
 .where{min-width:0}
@@ -4566,7 +4565,9 @@ function wake(){document.body.classList.remove('idle');clearTimeout(idleT);idleT
 ['pointermove','pointerdown','keydown','wheel','touchstart'].forEach(ev=>addEventListener(ev,wake,{passive:true}));
 
 /* the clock scales with the screen: compact on a phone, readable from across the room on a desk monitor */
-function fitClock(){const k=clamp(Math.min(innerWidth/(innerWidth>innerHeight?1300:900),innerHeight/640),.48,1.8);document.documentElement.style.setProperty('--ck',k.toFixed(3));}
+function fitClock(){const k=clamp(Math.min(innerWidth/(innerWidth>innerHeight?1300:900),innerHeight/640),.48,1.8);document.documentElement.style.setProperty('--ck',k.toFixed(3));
+  /* set as a number on the element: WebKit ignores zoom when it comes from a custom property */
+  const c=$('#clock');if(c)c.style.zoom=k.toFixed(3);}
 /* resize */
 let rsT=null;
 addEventListener('resize',()=>{clearTimeout(rsT);rsT=setTimeout(()=>{if(PORTRAIT.matches)return;SA.read();fitClock();if(shown($('#tour'))){const pg=$('#tour .tour-pages');if(pg._sp)pg._sp.stop();pg._x=-Tour.i*$('#tour .tour-vp').offsetWidth;pg.style.transform=`translateX(${pg._x}px)`;}Type.insets();UI.vizOff=getComputedStyle($('#viz')).display==='none';if(innerWidth===Stage.W&&innerHeight===Stage.H)return;Stage.resize();Stage.build();Focus.layout();Stk.render();Pins.render();for(const id in WM.els)if(WM.isOpen(id))WM.place(WM.els[id],id);},160);});
