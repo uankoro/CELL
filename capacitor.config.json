@@ -1,0 +1,17 @@
+{
+  "appId": "app.cell.rooms",
+  "appName": "CELL",
+  "webDir": "www",
+  "backgroundColor": "#04050a",
+  "ios": {
+    "contentInset": "never",
+    "scrollEnabled": false,
+    "allowsLinkPreview": false,
+    "preferredContentMode": "mobile"
+  },
+  "plugins": {
+    "LocalNotifications": {
+      "iconColor": "#5ef2ff"
+    }
+  }
+}

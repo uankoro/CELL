@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CELL 使い方ガイド</title>
+<meta name="description" content="CELL（チル・カジュアル・ライフ）の使い方。はじめての準備から、部屋と音楽、ゴミの日やルーティンの登録、データの引っ越しまで。">
+<style>
+:root{
+  --bg:#f6f4ef;--paper:#fffdf8;--ink:#1d1f24;--ink2:#4a4e57;--ink3:#7a7f8a;--line:#e3dfd5;--accent:#2f6f7e;--accent-bg:#e4eff1;--warn-bg:#fbf1e1;--warn:#8a5a12;
+  --font:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic UI","Yu Gothic","Meiryo","Noto Sans JP",sans-serif;
+  color-scheme:light dark;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#101215;--paper:#171a1f;--ink:#e9ebef;--ink2:#b7bcc6;--ink3:#8c929e;--line:#2a2e36;--accent:#7cc4d2;--accent-bg:#1b2b30;--warn-bg:#2b2416;--warn:#e2b56a}}
+:root[data-theme="dark"]{--bg:#101215;--paper:#171a1f;--ink:#e9ebef;--ink2:#b7bcc6;--ink3:#8c929e;--line:#2a2e36;--accent:#7cc4d2;--accent-bg:#1b2b30;--warn-bg:#2b2416;--warn:#e2b56a}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.8;font-feature-settings:"palt";-webkit-font-smoothing:antialiased}
+.wrap{max-width:780px;margin:0 auto;padding:0 16px 80px}
+header.hero{padding:64px 0 28px;border-bottom:1px solid var(--line);margin-bottom:8px}
+.mark{font-weight:300;letter-spacing:.42em;font-size:13px;color:var(--ink3);margin:0 0 18px}
+h1{font-size:clamp(28px,6vw,38px);line-height:1.35;margin:0 0 12px;font-weight:700;letter-spacing:.01em}
+.lead{color:var(--ink2);margin:0;font-size:17px}
+nav.toc{margin:28px 0 8px;padding:18px 20px;background:var(--paper);border:1px solid var(--line);border-radius:14px}
+nav.toc b{display:block;font-size:13px;color:var(--ink3);font-weight:600;margin-bottom:6px}
+nav.toc ol{margin:0;padding-left:1.4em;columns:2;column-gap:28px}
+nav.toc li{break-inside:avoid;font-size:15px;margin:0 0 6px}
+@media (max-width:560px){nav.toc ol{columns:1}}
+a{color:var(--accent);text-underline-offset:3px}
+h2{font-size:24px;margin:56px 0 12px;padding-top:12px;line-height:1.4;scroll-margin-top:16px}
+h2 small{display:block;font-size:13px;font-weight:500;color:var(--ink3);letter-spacing:.04em;margin-bottom:2px}
+h3{font-size:18px;margin:32px 0 6px}
+p{margin:10px 0}
+ul,ol{padding-left:1.4em;margin:10px 0}
+li{margin:4px 0}
+.modes{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:20px 0}
+@media (max-width:640px){.modes{grid-template-columns:1fr}}
+.mode{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+.mode b{display:block;font-size:17px}
+.mode span{display:block;color:var(--ink2);font-size:14.5px;line-height:1.7;margin-top:4px}
+.steps{counter-reset:s;list-style:none;padding:0}
+.steps li{counter-increment:s;position:relative;padding:10px 0 10px 44px;border-bottom:1px solid var(--line)}
+.steps li::before{content:counter(s);position:absolute;left:0;top:10px;width:28px;height:28px;border-radius:50%;background:var(--accent-bg);color:var(--accent);font-weight:700;font-size:14px;display:grid;place-items:center;line-height:1}
+.note{background:var(--accent-bg);border-radius:12px;padding:12px 16px;margin:16px 0;font-size:15px}
+.warn{background:var(--warn-bg);color:var(--ink);border-left:3px solid var(--warn);border-radius:6px 12px 12px 6px;padding:12px 16px;margin:16px 0;font-size:15px}
+.warn b{color:var(--warn)}
+table{width:100%;border-collapse:collapse;margin:12px 0;font-size:15px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:13px;color:var(--ink3);font-weight:600}
+kbd{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:13px;padding:1px 7px;border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;background:var(--paper);white-space:nowrap}
+.ui{font-weight:600;white-space:nowrap}
+details{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin:10px 0}
+summary{cursor:pointer;font-weight:600;list-style-position:outside}
+details p{margin:8px 0 2px;color:var(--ink2)}
+footer{margin-top:64px;padding-top:20px;border-top:1px solid var(--line);color:var(--ink3);font-size:13.5px}
+.table-scroll{overflow-x:auto}
+@media print{body{background:#fff;color:#000}nav.toc{break-after:page}h2{break-after:avoid}details{border:0;padding:0}details>*{display:block}.wrap{max-width:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <p class="mark">CELL</p>
+  <h1>CELL 使い方ガイド</h1>
+  <p class="lead">部屋の灯りと音楽に包まれて、集中して、休んで、暮らしを整える。はじめての準備から、毎日の使い方、困ったときの対処まで、この1ページにまとめました。</p>
+</header>
+
+<nav class="toc" aria-label="目次">
+  <b>目次</b>
+  <ol>
+    <li><a href="#about">CELL の3つの使い方</a></li>
+    <li><a href="#setup">はじめての準備</a></li>
+    <li><a href="#chill">チル：部屋と音楽と道具</a></li>
+    <li><a href="#casual">カジュアル：時計とアラーム</a></li>
+    <li><a href="#life">ライフ：暮らしの一日</a></li>
+    <li><a href="#pc">PC・サブモニターで使う</a></li>
+    <li><a href="#notify">お知らせについて（大切）</a></li>
+    <li><a href="#settings">設定</a></li>
+    <li><a href="#data">データと引っ越し</a></li>
+    <li><a href="#keys">キーボードショートカット</a></li>
+    <li><a href="#faq">よくある質問・困ったとき</a></li>
+  </ol>
+</nav>
+
+<h2 id="about"><small>01</small>CELL の3つの使い方</h2>
+<p>CELL には3つの使い方があり、いつでも切り替えられます。データ（タスク・予定・記録）は3つで共通です。</p>
+<div class="modes">
+  <div class="mode"><b>チル</b><span>8つの部屋の景色と、15曲の音楽・環境音。タイマーやタスクで集中し、眠る前にも。</span></div>
+  <div class="mode"><b>カジュアル</b><span>デザインの違う置き時計と、アラーム・タスク。机の上の時計として。</span></div>
+  <div class="mode"><b>ライフ</b><span>今日の予定、ゴミの日や家事、天気、からだの記録、習慣。暮らしの一日をひと目で。</span></div>
+</div>
+<p><b>切り替え方</b>：チルでは右上の <span class="ui">⋯</span> から「カジュアル表示に切り替え」「ライフに切り替え」。ライフでは左上の <span class="ui">チル／カジュアル／ライフ</span>。カジュアルでも上部の同じ切り替えから移れます。</p>
+
+<h2 id="setup"><small>02</small>はじめての準備</h2>
+<h3>iPhone（おすすめ：ホーム画面に追加）</h3>
+<ol class="steps">
+  <li>Safari で CELL のページを開きます。</li>
+  <li>画面下の共有ボタン（四角から上向きの矢印）をタップし、<span class="ui">ホーム画面に追加</span> を選びます。</li>
+  <li>ホーム画面にできた CELL のアイコンから開きます。全画面で、アプリのように使えます。</li>
+  <li>iPhone を<b>横向き</b>にしてください。CELL は横長の窓から眺める部屋として作られています（縦向きのときは案内が出ます。横に戻すと続きから使えます）。</li>
+</ol>
+<div class="note">はじめて開くと <span class="ui">入室する</span>（チル）、<span class="ui">ライフで開く</span>、<span class="ui">カジュアル表示で開く</span> が出ます。音が鳴るのはチルに入室したときです。マナーモード（消音スイッチ）がオンでも音楽は鳴ります。</div>
+<h3>PC（Windows・Mac）</h3>
+<ul>
+  <li>Chrome・Edge・Safari で開けます。Chrome・Edge ではアドレスバーの「インストール」から、独立したウィンドウのアプリにできます。</li>
+  <li>サブモニターに置く使い方は <a href="#pc">PC・サブモニターで使う</a> をご覧ください。</li>
+</ul>
+<h3>一度読み込めば、オフラインでも</h3>
+<p>一度開いたあとは、電波のない場所でも起動します（天気の更新だけはインターネットが必要です）。</p>
+
+<h2 id="chill"><small>03</small>チル：部屋と音楽と道具</h2>
+<h3>部屋を選ぶ</h3>
+<p>左上の部屋の名前をタップすると <span class="ui">部屋と過ごし方</span> が開きます。夜ドライブ・焚火・喫茶・縁側・基地・雪見湯・灯台・軌道の8つの部屋があり、それぞれに景色・時計・環境音があります。</p>
+<h3>過ごし方（ワンタップで揃える）</h3>
+<p>同じシートの「過ごし方」から、勉強・作業／読書／睡眠／瞑想・深呼吸／休憩／在宅ワークのBGM／子どもの学習を選ぶと、部屋・音楽・道具がひと揃いになります。</p>
+<h3>音楽（15曲）と環境音</h3>
+<ul>
+  <li>左下のプレーヤーで再生・一時停止・前後の曲。曲名をタップすると15曲の一覧が開きます。</li>
+  <li>右下の <span class="ui">サウンド</span> で、音楽と環境音（雨・焚火・波など）の音量を別々に調整できます。おやすみタイマーもここにあります。</li>
+  <li>曲はその場で演奏しているため、同じ曲でも毎回少しずつ違って聞こえます。</li>
+</ul>
+<h3>道具</h3>
+<table>
+  <tr><th>道具</th><th>できること</th></tr>
+  <tr><td>タイマー</td><td>ポモドーロ（集中25分と休憩）、好きな長さのタイマー、ストップウォッチ</td></tr>
+  <tr><td>カレンダー</td><td>月の予定と祝日。日付をタップして予定を追加（リマインダーになります）</td></tr>
+  <tr><td>リマインダー</td><td>日時を決めて知らせる。「10分後」などの早押しも</td></tr>
+  <tr><td>タスク</td><td>やることの一覧。右へスワイプで完了、左へで削除（取り消し可）、長押しでメニュー。「いまやること」に選ぶと時計の下に表示</td></tr>
+  <tr><td>メモ・付箋</td><td>メモと、画面に貼れる付箋</td></tr>
+  <tr><td>記録</td><td>集中した時間の7日間・月ごとの記録。この7日間を画像にして共有も</td></tr>
+  <tr><td>深呼吸</td><td>4秒ずつの呼吸を約1分</td></tr>
+</table>
+<h3>部屋が主役になる仕組み</h3>
+<p>しばらく触れないと、ボタン類は静かに消え、部屋と時計だけが残ります。画面に触れる・マウスを動かす・キーを押すと戻ります（戻すためのひと触れでボタンが押されることはありません）。常に表示したい場合は <a href="#settings">設定</a> の「操作を自動で隠す」をオフにします。</p>
+<h3>FOCUS・時計だけ・睡眠</h3>
+<ul>
+  <li><b>FOCUS</b>（右上の四角いアイコン）：時計を大きくして、集中タイマーだけを表示します。</li>
+  <li><b>時計だけを表示</b>（<span class="ui">⋯</span> メニュー）：飾りを消して時計だけに。</li>
+  <li><b>睡眠</b>（過ごし方）：波の音だけになり、30分で止まり、画面が暗くなります。<span class="ui">起きる</span> を押すと、眠っていた時間がライフに記録されます。</li>
+</ul>
+
+<h2 id="casual"><small>04</small>カジュアル：時計とアラーム</h2>
+<p>デザインの違う置き時計に切り替わります。アラーム（曜日のくり返し、スヌーズ）とタスクも使えます。タスクはチル・ライフと共通です。</p>
+
+<h2 id="life"><small>05</small>ライフ：暮らしの一日</h2>
+<p>画面は3列です。左に「いま」（時刻・天気・くらし）、中央に「今日の流れ」、右に「からだと習慣」。上部の <span class="ui">今日</span>／<span class="ui">振り返り</span> で表示を切り替えます。右上の <span class="ui">＋</span> から、ルーティン・習慣・くらしの予定・リマインダー・タスクを追加できます。</p>
+
+<h3>今日の流れ</h3>
+<p>ルーティン・リマインダー・カジュアルのアラーム・薬・期限が今日のタスクが、時刻順に並びます。いまの時刻には赤い線が引かれます。薬やタスクは右の丸をタップすると済みになります。</p>
+
+<h3>ゴミの日を登録する</h3>
+<ol class="steps">
+  <li>左の列の「くらし」で <span class="ui">登録する</span>（または <span class="ui">＋</span> →「くらしの予定」）をタップします。</li>
+  <li>「ゴミの日」から品目（燃えるゴミ・プラスチック・資源ゴミ など）をタップします。</li>
+  <li><span class="ui">くり返し</span> で決まり方を選びます。毎週の曜日なら「毎週（曜日）」、「第2・第4 水曜」のような地域なら「毎月（第何・何曜日）」。</li>
+  <li>曜日（と第何週）をタップして選びます。下に「次は ○○」と、次の収集日が表示されます。</li>
+  <li>お知らせの時刻を確かめます。最初は「前の晩 20:00」がオンです。当日の朝にも知らせたい場合は「当日の朝」をオンにします。</li>
+</ol>
+<div class="note"><b>祝日に収集がない地域</b>は「祝日はお休み」をオンに。<b>年末年始など、その日だけ収集がない</b>ときは、今日の一覧でその品目を長押し（PC は右クリック）して <span class="ui">今回はなし</span> を選びます。</div>
+
+<h3>ときどきの家事・支払い・更新日</h3>
+<ul>
+  <li><b>N日ごとの家事</b>（シーツ・エアコンのフィルターなど）：「何日ごと」と、最後に済ませた日を選びます。期日を過ぎると「2日過ぎています」のように今日の一覧に残り、済ませると次の期日へ進みます。</li>
+  <li><b>支払い</b>（家賃・カードの引き落とし）：「毎月（日にち）」で日を選びます。月末より後の日は、その月の最終日になります。</li>
+  <li><b>更新日</b>（車検・保険など）：「毎年」で日付を選びます。</li>
+</ul>
+
+<h3>天気</h3>
+<p>左の列の <span class="ui">天気を表示する</span> から、都道府県の都市を選ぶか <span class="ui">現在地を使う</span> を押します。気温・最高最低・降水確率・3時間ごとの予報と、「傘を持って出かけましょう」「洗濯日和です」「暑くなります」などのひとことが出ます。30分ごとに更新し、オフラインでは前回の予報を表示します。</p>
+
+<h3>ルーティン</h3>
+<ol class="steps">
+  <li>今日の流れの「朝のルーティン」「夜のルーティン」のひな形をタップするか、<span class="ui">ルーティン</span> から作ります。</li>
+  <li>名前・始める時刻・曜日・ステップを編集します。ステップには分数と「あわせて行うこと」（水を1杯記録／深呼吸／集中タイマー／睡眠モード）を付けられます。</li>
+  <li>今日の流れの ▶ を押すと、ステップが一つずつ大きく表示され、分数を数えます。<span class="ui">できた</span> で次へ。最後まで進むと今日の済みになります。</li>
+</ol>
+
+<h3>からだと習慣</h3>
+<ul>
+  <li><b>気分</b>：5つの顔から1タップ。もう一度タップで取り消し。</li>
+  <li><b>睡眠</b>：チルの睡眠モードで眠ると自動で記録。手で入れることもできます。</li>
+  <li><b>水分</b>：＋／−でコップの数。目安は設定で変えられます。</li>
+  <li><b>薬・サプリ</b>：<span class="ui">ライフの設定</span>（右上の歯車）で名前と時刻を登録すると、今日の流れにチェック欄が出て、時刻に知らせます。</li>
+  <li><b>習慣</b>：「毎日」か「週に何回」。<b>連続日数は数えません。</b>週に何回の習慣は、その週のうちにできれば十分です。</li>
+  <li><b>今日のひとこと</b>：一行の日記。1年前・30日前の今日のひとことが下に出ます。</li>
+</ul>
+
+<h3>振り返り</h3>
+<p>7日間／30日間の、集中した時間・睡眠・気分・習慣・水分・くらしをまとめて見られます。記録がたまると「7時間以上眠った日の気分」「集中がいちばん長かった日」などの気づきが表示されます。</p>
+
+<h2 id="pc"><small>06</small>PC・サブモニターで使う</h2>
+<ul>
+  <li>ブラウザを全画面（Windows は <kbd>F11</kbd>、Mac は <kbd>Ctrl</kbd>＋<kbd>⌘</kbd>＋<kbd>F</kbd>）にしてサブモニターに置くと、部屋の窓になります。時計は画面の大きさに合わせて大きくなります。縦長のモニターにも対応しています。</li>
+  <li>ライフを出しておけば、今日の予定・ゴミの日・天気がいつでも目に入ります。背景は静止画なので、一日出しっぱなしでも負荷はほとんどかかりません。</li>
+  <li><b>小さな窓で表示</b>（Chrome・Edge、<kbd>W</kbd> キー）：時計・タイマー・いまやることが、ほかのアプリの上に浮かびます。</li>
+  <li>一日中表示しておくための配慮として、時計が数分ごとに数ピクセル動き（焼き付き防止）、23時〜6時は部屋を少し暗くします。</li>
+</ul>
+
+<h2 id="notify"><small>07</small>お知らせについて（大切）</h2>
+<p>タイマー・リマインダー・アラーム・ゴミの日・薬・ルーティンの時刻になると、音と画面の表示で知らせます（チル・カジュアル・ライフのどれを表示していても）。</p>
+<div class="warn"><b>ブラウザ・ホーム画面版の制限</b>：iPhone の画面がロックされている間や、ほかのアプリを使っている間は、ブラウザの仕組み上お知らせを鳴らせません。CELL に戻ったとき、2時間以内に過ぎたものは「見逃した」としてまとめて表示します。大切なゴミの日や薬は、iPhone 標準のリマインダーとの併用をおすすめします。App Store 版では、ロック中も iPhone の通知で知らせます。</div>
+<ul>
+  <li><b>音で知らせない</b>（設定）：図書館などでは、音の代わりに画面の縁が光って知らせます。</li>
+  <li>PC のブラウザでは、リマインダーの画面で <span class="ui">通知を許可</span> を押すと、ほかのタブを見ているときにも通知が出ます。</li>
+</ul>
+
+<h2 id="settings"><small>08</small>設定</h2>
+<p>チルでは <span class="ui">⋯</span> → <span class="ui">設定</span>（<kbd>,</kbd> キー）。ライフ専用の設定は右上の歯車です。</p>
+<div class="table-scroll"><table>
+  <tr><th>項目</th><th>内容</th></tr>
+  <tr><td>言語</td><td>自動／日本語／English</td></tr>
+  <tr><td>文字の大きさ</td><td>自動（iPhone の文字サイズに合わせる）／小〜特大</td></tr>
+  <tr><td>操作を自動で隠す</td><td>しばらく触れないと部屋と時計だけに</td></tr>
+  <tr><td>透明度を下げる</td><td>パネルの後ろを透かさず、読みやすく</td></tr>
+  <tr><td>夜は画面を暗くする・焼き付き防止</td><td>一日表示しておく画面のために</td></tr>
+  <tr><td>省電力</td><td>描画を控えめにして電池と発熱を抑える</td></tr>
+  <tr><td>画面を消さない</td><td>集中中・睡眠タイマー中に画面が消えないように</td></tr>
+  <tr><td>操作音／音で知らせない／目を休める合図</td><td>目を休める合図は20分ごとに「20秒遠くを見る」</td></tr>
+  <tr><td>ライフの設定</td><td>天気の場所、記録する項目（気分・睡眠・水分）、水の目安、薬・サプリ</td></tr>
+</table></div>
+
+<h2 id="data"><small>09</small>データと引っ越し</h2>
+<p>タスク・予定・記録は、<b>すべてお使いの端末の中だけ</b>に保存されます。サーバーには送りません（天気の取得では、選んだ場所の座標だけを天気サービスに送ります）。</p>
+<div class="warn"><b>ご注意</b>：ブラウザの「履歴とWebサイトデータを消去」をすると、CELL のデータも消えます。機種変更の前や、念のための控えとして、ときどき書き出しておいてください。</div>
+<h3>書き出す・読み込む（機種変更のとき）</h3>
+<ol class="steps">
+  <li>チルの <span class="ui">記録</span> を開き、<span class="ui">データの引っ越し</span> を開きます（設定の「データの引っ越し」からも開けます）。</li>
+  <li><span class="ui">書き出してコピー</span> または <span class="ui">ファイルに保存</span> で、データを控えます。</li>
+  <li>新しい端末で CELL を開き、同じ場所の <span class="ui">読み込む</span> に貼り付けます（またはファイルを選びます）。</li>
+</ol>
+
+<h2 id="keys"><small>10</small>キーボードショートカット</h2>
+<p>チルで <kbd>?</kbd> を押すと、いつでも一覧を表示できます。</p>
+<div class="table-scroll"><table>
+  <tr><th>キー</th><th>チル</th><th>キー</th><th>ライフ</th></tr>
+  <tr><td><kbd>Space</kbd></td><td>再生／一時停止</td><td><kbd>Space</kbd></td><td>音楽を流す／止める</td></tr>
+  <tr><td><kbd>N</kbd></td><td>次の曲</td><td><kbd>1</kbd> <kbd>2</kbd></td><td>今日／振り返り</td></tr>
+  <tr><td><kbd>1</kbd>〜<kbd>8</kbd> <kbd>←</kbd> <kbd>→</kbd></td><td>部屋を選ぶ・切り替え</td><td><kbd>H</kbd></td><td>チルへ</td></tr>
+  <tr><td><kbd>T</kbd> <kbd>K</kbd> <kbd>R</kbd> <kbd>L</kbd></td><td>タイマー・カレンダー・リマインダー・タスク</td><td><kbd>C</kbd></td><td>カジュアルへ</td></tr>
+  <tr><td><kbd>M</kbd> <kbd>E</kbd> <kbd>G</kbd> <kbd>B</kbd></td><td>サウンド・メモ・記録・深呼吸</td><td><kbd>,</kbd></td><td>ライフの設定</td></tr>
+  <tr><td><kbd>F</kbd> <kbd>O</kbd> <kbd>W</kbd></td><td>時計だけ・FOCUS・小さな窓</td><td><kbd>Esc</kbd></td><td>閉じる</td></tr>
+  <tr><td><kbd>P</kbd> <kbd>,</kbd></td><td>部屋と過ごし方・設定</td><td></td><td></td></tr>
+  <tr><td><kbd>C</kbd> <kbd>H</kbd></td><td>カジュアルへ・ライフへ</td><td></td><td></td></tr>
+</table></div>
+
+<h2 id="faq"><small>11</small>よくある質問・困ったとき</h2>
+<details><summary>音が鳴らない</summary><p>iPhone では、最初に画面をタップしたときに音が出せるようになります（ブラウザの決まりです）。電話やほかのアプリから戻ったときも、ひと触れで音が戻ります。音量は右下の「サウンド」でも確認してください。</p></details>
+<details><summary>ゴミの日のお知らせが来なかった</summary><p>ブラウザ・ホーム画面版では、iPhone のロック中や他のアプリの使用中は鳴りません（<a href="#notify">お知らせについて</a>）。CELL を開くと「見逃した」お知らせとして表示されます。登録内容は「くらしの予定」で、「次は ○○」の日付が合っているか確かめてください。</p></details>
+<details><summary>天気が表示されない</summary><p>ライフの設定で天気の場所を選んでください。インターネットにつながっていないと「オフラインです」と表示され、前回の予報が残ります。</p></details>
+<details><summary>画面が縦にならない／横向きにしてと出る</summary><p>CELL は横向き専用です。iPhone の画面縦向きロックを解除し、横に向けてください。</p></details>
+<details><summary>ボタンが消えてしまう</summary><p>しばらく触れないと部屋だけになる仕組みです。どこかをタップすると戻ります。常に表示したい場合は、設定の「操作を自動で隠す」をオフにしてください。</p></details>
+<details><summary>電池の減りや発熱が気になる</summary><p>設定の「省電力」をオンにしてください。ライフの画面は動きがないため、もっとも負荷が少ない表示です。</p></details>
+<details><summary>英語で使いたい</summary><p>設定の「言語」で English を選べます。ご自身で入力した文字はそのまま残ります。</p></details>
+<details><summary>連続日数（ストリーク）はないの？</summary><p>ありません。1日休むと記録が0に戻る仕組みは、続ける気持ちをかえって削ぐためです。習慣は「今週 2/3回」のように表示します。</p></details>
+
+<footer>
+  <p>CELL 4.0　このガイドは CELL 4.0 の内容に基づいています。画面や名称は、今後の更新で変わることがあります。</p>
+</footer>
+</div>
+</body>
+</html>
