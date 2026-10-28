@@ -48,6 +48,7 @@ iPhone の横向き（ホーム画面から全画面で）と、PC のサブモ�
 | `tests/`・`playwright.config.mjs`・`package.json` | 自動テスト（公開には不要。GitHub Pages には配信されても動作に影響なし） |
 | `docs/QUALITY.md` | Lighthouse などの計測結果 |
 | `docs/RESEARCH.md` | 類似アプリ・利用者のニーズの調査と、v3 に反映したこと |
+| `docs/guide.html` | 購入者・利用者向けの使い方ガイド（1ページ、印刷にも対応） |
 | `docs/RESEARCH-LIFE.md`・`docs/BUSINESS.md` | ライフの調査（暮らしの需要・課金の相場）と、CELL+（月額課金）の事業計画 |
 | `docs/APPSTORE.md` | App Store 版への道筋（Mac での手順、審査対策、提出チェックリスト） |
 | `capacitor.config.json`・`scripts/build-www.mjs` | App Store 版（iOS アプリ）の設定と、アプリに入れるファイルをまとめるスクリプト（`npm run build:www`） |
